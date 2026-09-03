@@ -1,4 +1,4 @@
-#include "../../../Common/src/midi/MidiMonoIn.h"
+#include "MidiMonoIn.h"
 
 void MidiIn_MonoInterpreter::onInnerEvent(const MidiInEvent& ev)
 {
