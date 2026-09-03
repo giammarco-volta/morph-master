@@ -18,13 +18,13 @@ ApplicationWindow {
     Material.accent: Material.Amber
 
     readonly property int layoutClass:
-        contentItem.height <= UiMetrics.phoneMaxHeight
-            ? UiMetrics.Phone
-            : contentItem.height <= UiMetrics.tabletMaxHeight
-                ? UiMetrics.Tablet
-                : UiMetrics.Desktop
+        contentItem.height <= SharedUi.UiMetrics.phoneMaxHeight
+            ? SharedUi.UiMetrics.Phone
+            : contentItem.height <= SharedUi.UiMetrics.tabletMaxHeight
+                ? SharedUi.UiMetrics.Tablet
+                : SharedUi.UiMetrics.Desktop
 
-    readonly property string layoutClassName: UiMetrics.layoutClassName(layoutClass)
+    readonly property string layoutClassName: SharedUi.UiMetrics.layoutClassName(layoutClass)
 
     readonly property real viewportWidth: contentItem.width
     readonly property real viewportHeight: contentItem.height

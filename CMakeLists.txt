@@ -26,6 +26,10 @@ if(QT_KNOWN_POLICY_QTP0002)
     qt_policy(SET QTP0002 NEW)
 endif()
 
+if(QT_KNOWN_POLICY_QTP0005)
+    qt_policy(SET QTP0005 NEW)
+endif()
+
 set(MORPHMASTER_SOURCES
   src/main.cpp
   src/About.h
@@ -91,6 +95,8 @@ set_source_files_properties(
 qt_add_qml_module(MorphMaster
   URI MorphMaster
   VERSION 1.0
+  DEPENDENCIES
+    TARGET NaadaLabUi
   RESOURCE_PREFIX /qt/qml
   NO_RESOURCE_TARGET_PATH
   QML_FILES
