@@ -83,9 +83,7 @@ elseif(ANDROID)
 else()
   list(APPEND MORPHMASTER_SOURCES
     ../Common/src/midi/MidiOut_Stub.h
-    ../Common/src/midi/MidiOut_Stub.cpp
     ../Common/src/midi/MidiIn_Stub.h
-    ../Common/src/midi/MidiIn_Stub.cpp
   )
 endif()
 
