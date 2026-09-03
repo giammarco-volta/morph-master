@@ -1,5 +1,6 @@
 #include "Presets.h"
 
+#include <algorithm>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -54,18 +55,23 @@ namespace
   QJsonObject toJson(const TrackPresetData& t)
   {
     QJsonObject obj;
-    obj["valid"] = t.valid;
-    obj["group"] = enumToInt(t.group);
+
+    obj["morphOutput"] = enumToInt(t.morphOutput);
     obj["footage"] = enumToInt(t.footage);
+
     obj["program_cc0"] = static_cast<int>(t.program_cc0);
     obj["program_cc32"] = static_cast<int>(t.program_cc32);
     obj["program_number"] = static_cast<int>(t.program_number);
+
     obj["panorama"] = static_cast<int>(t.panorama);
     obj["volume"] = static_cast<int>(t.volume);
+    obj["reverb"] = static_cast<int>(t.reverb);
+    obj["chorus"] = static_cast<int>(t.chorus);
     obj["timbre1"] = static_cast<int>(t.timbre1);
     obj["timbre2"] = static_cast<int>(t.timbre2);
-    obj["curve1"] = static_cast<int>(t.curve1);
-    obj["curve2"] = static_cast<int>(t.curve2);
+    obj["detuneOffset"] = static_cast<int>(t.detuneOffset);
+    obj["detuneSpread"] = static_cast<int>(t.detuneSpread);
+
     return obj;
   }
 
@@ -73,24 +79,47 @@ namespace
   {
     TrackPresetData t;
 
-    t.valid = obj.value("valid").toBool(false);
-    t.group = intToEnum<TrackGroupId>(
-      obj.value("group").toInt(enumToInt(TrackGroupId::None)),
-      TrackGroupId::None);
-    t.footage = intToEnum<Footage>(
-      obj.value("footage").toInt(enumToInt(Footage::ftg8)),
-      Footage::ftg8);
+    const int morphOutputValue = obj.contains("morphOutput")
+      ? obj.value("morphOutput").toInt(enumToInt(MorphOutputId::None))
+      : obj.value("group").toInt(enumToInt(MorphOutputId::None));
+
+    t.morphOutput = intToEnum<MorphOutputId>(morphOutputValue,
+                                             MorphOutputId::None);
+    t.footage = intToEnum<Footage>(obj.value("footage").toInt(enumToInt(Footage::ftg8)), Footage::ftg8);
+
     t.program_cc0 = static_cast<uint8_t>(obj.value("program_cc0").toInt(0));
     t.program_cc32 = static_cast<uint8_t>(obj.value("program_cc32").toInt(0));
     t.program_number = static_cast<uint8_t>(obj.value("program_number").toInt(0));
+
     t.panorama = static_cast<int8_t>(obj.value("panorama").toInt(0));
     t.volume = static_cast<uint8_t>(obj.value("volume").toInt(100));
+    t.reverb = static_cast<uint8_t>(obj.value("reverb").toInt(40));
+    t.chorus = static_cast<uint8_t>(obj.value("chorus").toInt(0));
     t.timbre1 = static_cast<int8_t>(obj.value("timbre1").toInt(0));
     t.timbre2 = static_cast<int8_t>(obj.value("timbre2").toInt(0));
-    t.curve1 = static_cast<uint8_t>(obj.value("curve1").toInt(0));
-    t.curve2 = static_cast<uint8_t>(obj.value("curve2").toInt(0));
+    t.detuneOffset = static_cast<int8_t>(std::clamp(
+      obj.value("detuneOffset").toInt(0), -50, 50));
+    t.detuneSpread = static_cast<uint8_t>(std::clamp(
+      obj.value("detuneSpread").toInt(0), 0, 50));
 
     return t;
+  }
+
+
+  QJsonObject toJson(const MorphOutputPresetData& output)
+  {
+    QJsonObject obj;
+    obj["name"] = output.name;
+    obj["customName"] = output.customName;
+    return obj;
+  }
+
+  MorphOutputPresetData morphOutputPresetDataFromJson(const QJsonObject& obj)
+  {
+    MorphOutputPresetData output;
+    output.name = obj.value("name").toString().trimmed().left(40);
+    output.customName = obj.value("customName").toBool(false);
+    return output;
   }
 
   // ------------------------------
@@ -125,6 +154,7 @@ namespace
     obj["midiInPort"] = m.midiInPort;
     obj["midiOutPort"] = m.midiOutPort;
     obj["midiInChannel"] = static_cast<int>(m.midiInChannel);
+    obj["filterPresetControlChanges"] = m.filterPresetControlChanges;
     return obj;
   }
 
@@ -134,38 +164,66 @@ namespace
     m.midiInPort = obj.value("midiInPort").toString();
     m.midiOutPort = obj.value("midiOutPort").toString();
     m.midiInChannel = static_cast<uint8_t>(obj.value("midiInChannel").toInt(0));
+    m.filterPresetControlChanges =
+      obj.value("filterPresetControlChanges").toBool(true);
     return m;
   }
 
   // ------------------------------
   // PresetData
   // ------------------------------
+
+  QJsonObject toJson(const AppInitSettings& a)
+  {
+    QJsonObject obj;
+
+    obj["midiSetup"] = toJson(a.midiSetup);
+    obj["playMode"] = enumToInt(a.playMode);
+    obj["patchPolicy"] = enumToInt(a.patchPolicy);
+    obj["knownInstrumentName"] = a.knownInstrumentName;
+    obj["keyboardRangeId"] = enumToInt(a.keyboardRangeId);
+    obj["pitchBendRange"] = static_cast<int>(a.pitchBendRange);
+    obj["morphOutputMuteMask"] = static_cast<int>(a.morphOutputMuteMask);
+    obj["morphOutputSoloMask"] = static_cast<int>(a.morphOutputSoloMask);
+
+    return obj;
+  }
+
+  AppInitSettings appInitSettingsFromJson(const QJsonObject& obj)
+  {
+    AppInitSettings a;
+
+    a.midiSetup = midiSetupDataFromJson(obj.value("midiSetup").toObject());
+    a.playMode = intToEnum<PlayMode>(obj.value("playMode").toInt(enumToInt(a.playMode)), a.playMode);
+    a.patchPolicy = intToEnum<PatchPolicy>(obj.value("patchPolicy").toInt(enumToInt(a.patchPolicy)), a.patchPolicy);
+    a.knownInstrumentName = obj.value("knownInstrumentName").toString(a.knownInstrumentName);
+    a.keyboardRangeId = intToEnum<KeyboardRangeId>(obj.value("keyboardRangeId").toInt(enumToInt(a.keyboardRangeId)), a.keyboardRangeId);
+    a.pitchBendRange = static_cast<uint8_t>(std::clamp(obj.value("pitchBendRange").toInt(a.pitchBendRange), 0, 24));
+    a.morphOutputMuteMask = static_cast<uint8_t>(std::clamp(obj.value("morphOutputMuteMask").toInt(a.morphOutputMuteMask), 0, 255));
+    a.morphOutputSoloMask = static_cast<uint8_t>(std::clamp(obj.value("morphOutputSoloMask").toInt(a.morphOutputSoloMask), 0, 255));
+
+    return a;
+  }
+
   QJsonObject toJson(const PresetData& p)
   {
     QJsonObject obj;
     obj["name"] = p.name;
-    obj["keyboardRangeId"] = enumToInt(p.appInitSettings.keyboardRangeId);
-    obj["midiSetup"] = toJson(p.appInitSettings.midiSetup);
-
-    QJsonArray assignmentsArray;
-    for (const auto& a : p.assignments)
-      assignmentsArray.append(enumToInt(a));
-    obj["assignments"] = assignmentsArray;
+    obj["notes"] = p.notes;
+    obj["appInitSettings"] = toJson(p.appInitSettings);
 
     QJsonArray tracksArray;
     for (const auto& t : p.tracks)
       tracksArray.append(toJson(t));
     obj["tracks"] = tracksArray;
 
-    QJsonArray keyCurvesArray;
-    for (const auto& c : p.keyCurves)
-      keyCurvesArray.append(toJson(c));
-    obj["keycurves"] = keyCurvesArray;
+    QJsonArray morphOutputsArray;
+    for (const auto& output : p.morphOutputs)
+      morphOutputsArray.append(toJson(output));
+    obj["morphOutputs"] = morphOutputsArray;
 
-    QJsonArray velCurvesArray;
-    for (const auto& c : p.velCurves)
-      velCurvesArray.append(toJson(c));
-    obj["velcurves"] = velCurvesArray;
+    obj["keycurve"] = toJson(p.keyCurve);
+    obj["velcurve"] = toJson(p.velCurve);
 
     return obj;
   }
@@ -174,21 +232,11 @@ namespace
   {
     PresetData p;
     p.name = obj.value("name").toString().trimmed();
-    p.appInitSettings.keyboardRangeId = intToEnum<KeyboardRangeId>(
-      obj.value("keyboardRangeId").toInt(enumToInt(KeyboardRangeId::Full)),
-      KeyboardRangeId::Full);
-    p.appInitSettings.midiSetup = midiSetupDataFromJson(obj.value("midiSetup").toObject());
+    p.notes = obj.value("notes").toString();
 
+    if (obj.contains("appInitSettings") && obj.value("appInitSettings").isObject())
     {
-      const QJsonArray arr = obj.value("assignments").toArray();
-      for (int i = 0; i < kNumTracks; ++i)
-      {
-        const int value = (i < arr.size())
-          ? arr.at(i).toInt(enumToInt(TrackGroupId::None))
-          : enumToInt(TrackGroupId::None);
-
-        p.assignments[i] = intToEnum<TrackGroupId>(value, TrackGroupId::None);
-      }
+      p.appInitSettings = appInitSettingsFromJson(obj.value("appInitSettings").toObject());
     }
 
     {
@@ -203,26 +251,34 @@ namespace
     }
 
     {
-      const QJsonArray arr = obj.value("keycurves").toArray();
-      for (int i = 0; i < static_cast<int>(numOfCurves); ++i)
+      const QJsonArray arr = obj.value("morphOutputs").toArray();
+      for (int i = 0; i < static_cast<int>(p.morphOutputs.size()); ++i)
       {
         if (i < arr.size() && arr.at(i).isObject())
-          p.keyCurves[i] = piecewiseCurveFromJson(arr.at(i).toObject());
-        else
-          p.keyCurves[i] = PiecewiseCurve{};
+          p.morphOutputs[i] = morphOutputPresetDataFromJson(arr.at(i).toObject());
       }
     }
 
+    const auto readSingleCurve = [](const QJsonValue& value,
+                                    PiecewiseCurve defaultCurve)
     {
-      const QJsonArray arr = obj.value("velcurves").toArray();
-      for (int i = 0; i < static_cast<int>(numOfCurves); ++i)
+      if (value.isObject())
+        return piecewiseCurveFromJson(value.toObject());
+
+      /* Compatibility with the short-lived array-based representation. */
+      if (value.isArray())
       {
-        if (i < arr.size() && arr.at(i).isObject())
-          p.velCurves[i] = piecewiseCurveFromJson(arr.at(i).toObject());
-        else
-          p.velCurves[i] = PiecewiseCurve{};
+        const QJsonArray array = value.toArray();
+
+        if (!array.isEmpty() && array.first().isObject())
+          return piecewiseCurveFromJson(array.first().toObject());
       }
-    }
+
+      return defaultCurve;
+    };
+
+    p.keyCurve = readSingleCurve(obj.value("keycurve"), p.keyCurve);
+    p.velCurve = readSingleCurve(obj.value("velcurve"), p.velCurve);
 
     return p;
   }

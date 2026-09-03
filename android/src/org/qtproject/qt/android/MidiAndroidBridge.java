@@ -211,13 +211,30 @@ public class MidiAndroidBridge {
             return false;
         }
 
-        byte[] msg = new byte[3];
+        int messageType = status & 0xF0;
+
+        int length;
+        switch (messageType) {
+            case 0xC0: // Program Change
+            case 0xD0: // Channel Pressure
+                length = 2;
+                break;
+
+            default:
+                length = 3;
+                break;
+        }
+
+        byte[] msg = new byte[length];
+
         msg[0] = (byte)(status & 0xFF);
         msg[1] = (byte)(data1 & 0x7F);
-        msg[2] = (byte)(data2 & 0x7F);
+
+        if (length == 3)
+            msg[2] = (byte)(data2 & 0x7F);
 
         try {
-            currentOutputPort.send(msg, 0, msg.length);
+            currentOutputPort.send(msg, 0, length);
             return true;
         } catch (Exception e) {
             Log.d("MORPHMASTER_MIDI", "sendShort exception: " + e);

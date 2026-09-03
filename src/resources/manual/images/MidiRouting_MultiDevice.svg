@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720" role="img" aria-labelledby="title desc">
+  <title id="title">Multi-device MIDI routing for MorphMaster</title>
+  <desc id="desc">A remote MIDI sender sends MIDI data from a Local Off control track to MorphMaster. MorphMaster sends MIDI data to two or more receiving tracks on a separate remote MIDI receiver.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#d7e9df"/>
+    </marker>
+
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+
+    <linearGradient id="instrumentGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2e4f45"/>
+      <stop offset="100%" stop-color="#1c302b"/>
+    </linearGradient>
+
+    <linearGradient id="morphGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4d7f67"/>
+      <stop offset="100%" stop-color="#315742"/>
+    </linearGradient>
+
+    <style>
+      .bg { fill: #101716; }
+      .panel { stroke: #87b69d; stroke-width: 2; rx: 24; filter: url(#shadow); }
+      .track { fill: #14211e; stroke: #6e9b86; stroke-width: 1.5; rx: 14; }
+      .track-muted { fill: #211b18; stroke: #b88a66; stroke-width: 1.5; rx: 14; }
+      .title { fill: #f0f7f3; font: 700 31px Arial, Helvetica, sans-serif; }
+      .subtitle { fill: #d7e9df; font: 18px Arial, Helvetica, sans-serif; }
+      .label { fill: #f0f7f3; font: 700 22px Arial, Helvetica, sans-serif; }
+      .small { fill: #d7e9df; font: 17px Arial, Helvetica, sans-serif; }
+      .tiny { fill: #a9c7bb; font: 15px Arial, Helvetica, sans-serif; }
+      .warning { fill: #ffd6b5; font: 700 16px Arial, Helvetica, sans-serif; }
+      .arrow { stroke: #d7e9df; stroke-width: 5; fill: none; marker-end: url(#arrow); }
+      .arrow-label { fill: #f0f7f3; font: 700 18px Arial, Helvetica, sans-serif; }
+      .badge { fill: #203d34; stroke: #87b69d; stroke-width: 1.5; }
+      .badge-text { fill: #f0f7f3; font: 700 15px Arial, Helvetica, sans-serif; }
+      .note { fill: #ff4b4b; stroke: #ffd1d1; stroke-width: 2; }
+
+      .icon-stroke { stroke: #d7e9df; stroke-width: 2.1; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .key-white { fill: #f0f7f3; stroke: #d7e9df; stroke-width: 1.6; }
+      .key-black { fill: #101716; stroke: #d7e9df; stroke-width: 1.1; }
+      .speaker { fill: #d7e9df; stroke: #d7e9df; stroke-width: 1.5; }
+      .speaker-wave { stroke: #d7e9df; stroke-width: 3; fill: none; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1100" height="720"/>
+
+  <text class="title" x="550" y="56" text-anchor="middle">Multi-Device MIDI Configuration</text>
+  <text class="subtitle" x="550" y="88" text-anchor="middle">The controller keyboard and the sound-generating instrument may be different MIDI devices.</text>
+
+  <!-- Remote MIDI sender -->
+  <rect class="panel" x="70" y="135" width="410" height="205" fill="url(#instrumentGradient)"/>
+  <text class="label" x="275" y="178" text-anchor="middle">Remote MIDI Sender</text>
+  <text class="small" x="275" y="207" text-anchor="middle">Controller keyboard / control track</text>
+
+  <rect class="track-muted" x="105" y="240" width="340" height="72"/>
+  <text class="label" x="130" y="273">Control Track</text>
+  <text class="warning" x="130" y="299">Local Off</text>
+  <g transform="translate(340 256) scale(1.05)">
+<rect class="key-white" x="0" y="0" width="78" height="34" rx="3"/>
+<line class="icon-stroke" x1="11.14" y1="0" x2="11.14" y2="34"/>
+<line class="icon-stroke" x1="22.29" y1="0" x2="22.29" y2="34"/>
+<line class="icon-stroke" x1="33.43" y1="0" x2="33.43" y2="34"/>
+<line class="icon-stroke" x1="44.57" y1="0" x2="44.57" y2="34"/>
+<line class="icon-stroke" x1="55.71" y1="0" x2="55.71" y2="34"/>
+<line class="icon-stroke" x1="66.86" y1="0" x2="66.86" y2="34"/>
+<rect class="key-black" x="8" y="0" width="7" height="21" rx="1"/>
+<rect class="key-black" x="19" y="0" width="7" height="21" rx="1"/>
+<rect class="key-black" x="41" y="0" width="7" height="21" rx="1"/>
+<rect class="key-black" x="52" y="0" width="7" height="21" rx="1"/>
+<rect class="key-black" x="63" y="0" width="7" height="21" rx="1"/>
+</g>
+  <circle class="note" cx="405" cy="279" r="11"/>
+
+  <!-- Remote MIDI receiver -->
+  <rect class="panel" x="70" y="410" width="410" height="205" fill="url(#instrumentGradient)"/>
+  <text class="label" x="275" y="450" text-anchor="middle">Remote MIDI Receiver</text>
+  <text class="small" x="275" y="477" text-anchor="middle">Synthesizer / sound module</text>
+
+  <rect class="track" x="105" y="500" width="160" height="70"/>
+  <text class="label" x="125" y="534" style="font-size:18px">Receive Track 1</text>
+  <text class="small" x="125" y="557">Sound A</text>
+
+  <rect class="track" x="285" y="500" width="160" height="70"/>
+  <text class="label" x="305" y="534" style="font-size:18px">Receive Track 2</text>
+  <text class="small" x="305" y="557">Sound B</text>
+
+  <g transform="translate(228 540) scale(0.52)">
+      <polygon class="speaker" points="0,18 14,18 32,4 32,52 14,38 0,38"/>
+      <path class="speaker-wave" d="M42 18 C52 25 52 31 42 38"/>
+      <path class="speaker-wave" d="M55 10 C71 22 71 34 55 46"/>
+    </g>
+  <g transform="translate(408 540) scale(0.52)">
+      <polygon class="speaker" points="0,18 14,18 32,4 32,52 14,38 0,38"/>
+      <path class="speaker-wave" d="M42 18 C52 25 52 31 42 38"/>
+      <path class="speaker-wave" d="M55 10 C71 22 71 34 55 46"/>
+    </g>
+
+  <text class="tiny" x="275" y="600" text-anchor="middle">Two or more receiving tracks create the morphing result.</text>
+
+
+  <!-- MorphMaster -->
+  <rect class="panel" x="650" y="245" width="380" height="230" fill="url(#morphGradient)"/>
+  <text class="label" x="840" y="300" text-anchor="middle">MorphMaster</text>
+  <text class="small" x="840" y="331" text-anchor="middle">Computes track contributions</text>
+  <text class="small" x="840" y="358" text-anchor="middle">from key, velocity, groups</text>
+  <text class="small" x="840" y="385" text-anchor="middle">and crossfade curves</text>
+
+  <g transform="translate(750 410)">
+    <rect class="badge" x="0" y="0" width="180" height="32" rx="16"/>
+    <text class="badge-text" x="90" y="22" text-anchor="middle">MIDI processing</text>
+  </g>
+
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 445 278 C 530 278, 565 290, 650 296"/>
+  <text class="arrow-label" x="548" y="259" text-anchor="middle">MIDI OUT → IN</text>
+  <text class="tiny" x="548" y="309" text-anchor="middle">notes</text>
+
+  <path class="arrow" d="M 650 420 C 570 430, 535 510, 445 535"/>
+  <text class="arrow-label" x="548" y="426" text-anchor="middle">MIDI OUT → IN</text>
+  <text class="tiny" x="552" y="482" text-anchor="middle">generated MIDI streams</text>
+
+  <!-- Footer note -->
+  <rect x="90" y="640" width="920" height="44" rx="22" fill="#17231f" stroke="#4d7f67" stroke-width="1.2"/>
+  <text class="small" x="550" y="668" text-anchor="middle">The MIDI sender and MIDI receiver can be different devices, if MorphMaster can access both of them.</text>
+</svg>

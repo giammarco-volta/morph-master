@@ -1,5 +1,4 @@
 #include "InsParser.h"
-#include "CategoryClassifier.h"
 
 #include <algorithm>
 #include <cctype>
@@ -543,7 +542,6 @@ std::optional<InsParser::ParseResult> InsParser::parseText(const std::string& te
         entry.program = prog.first;
         entry.msb = msb;
         entry.lsb = lsb;
-        entry.category = classifyProgramCategory(entry.name, entry.msb, entry.lsb, entry.program);
         def.programs.push_back(std::move(entry));
       }
     }

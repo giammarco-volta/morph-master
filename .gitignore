@@ -1,0 +1,31 @@
+# Visual Studio / Qt Creator
+.vs/
+.qtcreator/
+*.user
+*.suo
+*.VC.db*
+*.db-shm
+*.db-wal
+*.vsidx
+*.ipch
+
+# CMake e compilazioni
+out/
+build*/
+deploy*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build.ninja
+.ninja_*
+
+# Archivi e copie locali
+MorphMaster*.zip
+
+# Credenziali di firma: non devono essere versionate
+*.keystore
+*.jks
+
+# File di sistema
+.DS_Store
+Thumbs.db

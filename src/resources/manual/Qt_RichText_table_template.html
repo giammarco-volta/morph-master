@@ -1,0 +1,67 @@
+<!--
+Qt RichText-safe table template for Morphora.
+
+Important: SettingsController removes the document <head> before sending each
+manual fragment to QML Text.RichText. Therefore the essential table geometry,
+borders and widths are repeated inline and as legacy HTML attributes.
+The manual-table CSS class remains useful in a normal browser and in print.
+-->
+
+<style>
+table.manual-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 1em 0;
+    width: 100%;
+    border: 1px solid #707070;
+}
+table.manual-table th,
+table.manual-table td {
+    border: 1px solid #707070;
+    padding: 6px 9px;
+    text-align: left;
+    vertical-align: top;
+}
+table.manual-table th {
+    background-color: #303030;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+</style>
+
+<table class="manual-table"
+       border="1"
+       bordercolor="#707070"
+       cellspacing="0"
+       cellpadding="6"
+       width="100%"
+       style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;">
+    <tr>
+        <th width="20%" align="left" valign="top" bgcolor="#303030"
+            style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;">
+            First column
+        </th>
+        <th width="25%" align="left" valign="top" bgcolor="#303030"
+            style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;">
+            Second column
+        </th>
+        <th width="55%" align="left" valign="top" bgcolor="#303030"
+            style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;">
+            Third column
+        </th>
+    </tr>
+    <tr>
+        <td width="20%" align="left" valign="top"
+            style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;">
+            Value 1
+        </td>
+        <td width="25%" align="left" valign="top"
+            style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;">
+            Value 2
+        </td>
+        <td width="55%" align="left" valign="top"
+            style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;">
+            Longer explanatory text, allowed to wrap within the remaining width.
+        </td>
+    </tr>
+</table>

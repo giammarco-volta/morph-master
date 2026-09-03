@@ -13,14 +13,6 @@
 
 namespace
 {
-ProgramCategory categoryFromString(const QString& s)
-{
-  for (size_t i = 0; i < static_cast<size_t>(ProgramCategory::numofCategories); ++i)
-    if (s == category_name[i])
-      return static_cast<ProgramCategory>(i);
-
-  return ProgramCategory::Other;
-}
 
 QString normalizedInstrumentName(const std::string& name)
 {
@@ -160,7 +152,6 @@ bool InstrumentDatabase::loadFromJsonFile(const QString& filePath, QString* erro
         const QJsonObject progObj = progVal.toObject();
 
         ProgramEntry p;
-        p.category = categoryFromString(progObj.value("category").toString());
         p.bankName = progObj.value("bankName").toString().toStdString();
         p.name = progObj.value("name").toString().toStdString();
         p.msb = progObj.value("msb").toInt(-1);

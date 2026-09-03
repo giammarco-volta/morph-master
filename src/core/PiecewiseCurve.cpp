@@ -1,18 +1,25 @@
 #include "PiecewiseCurve.h"
 
-#include <cmath>
+#include <algorithm>
 
-uint8_t evaluateCurve(const PiecewiseCurve& c, uint8_t x)
+
+//-----------------------------------------------------------
+float evaluateCurveWeight(const PiecewiseCurve& c, uint8_t x)
+//-----------------------------------------------------------
 {
+  auto normalize = [](float y) { return std::clamp(y / 100.0f, 0.0f, 1.0f); };
+
   if (x <= c.x0)
-    return c.y0;
+    return normalize(c.y0);
 
   if (x >= c.x1)
-    return c.y1;
+    return normalize(c.y1);
 
   if (c.x1 == c.x0)
-    return c.y1;
+    return normalize(c.y1);
 
   const float t = float(x - c.x0) / float(c.x1 - c.x0);
-  return uint8_t(std::lround(c.y0 + t * (c.y1 - c.y0)));
+  const float y = float(c.y0) + t * float(int(c.y1) - int(c.y0));
+
+  return normalize(y);
 }

@@ -4,16 +4,16 @@
 
 enum class Footage : uint8_t
 {
-  ftg16,    // + 0 cents
-  ftg8,     // + 0 cents
-  ftg5_1_3, // + 2 cents
-  ftg4,     // + 0 cents
-  ftg2_2_3, // + 2 cents
-  ftg2,     // + 0 cents
-  ftg1_3_5, // -14 cents
-  ftg1_1_3, // + 2 cents
-  ftg1_1_7, // -31 cents
-  ftg1,     // + 0 cents
+  ftg16,    //-12 semitones + 0 cents
+  ftg8,     //  0 semitones + 0 cents
+  ftg5_1_3, //+ 7 semitones + 2 cents
+  ftg4,     //+12 semitones + 0 cents
+  ftg2_2_3, //+19 semitones + 2 cents
+  ftg2,     //+24 semitones + 0 cents
+  ftg1_3_5, //+28 semitones -14 cents
+  ftg1_1_3, //+31 semitones + 2 cents
+  ftg1_1_7, //+34 semitones -31 cents
+  ftg1,     //+36 semitones + 0 cents
 
   Count
 };

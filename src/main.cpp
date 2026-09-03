@@ -1,71 +1,94 @@
 #include <QApplication>
-#include "MainWindow.h"
-#include "StyleUtils.h"
-#include <QFile>
+#include <QQmlApplicationEngine>
+#include <QDebug>
 #include <QDir>
+#include <QQuickStyle>
+#include <QQmlContext>
+#include <QTimer>
+
+#include "controllers/SettingsController.h"
 
 #ifdef Q_OS_ANDROID
-#include <QFont>
-#endif
+#include <QJniObject>
+#include <QtCore/qnativeinterface.h>
 
-// IMPORTANTISSIMO:
-#include <QtCore/qresource.h>   // oppure #include <QResource>
-
-int main(int argc, char *argv[])
+static void enableKeepScreenOn()
 {
-    QApplication app(argc, argv);
+  QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]()
+    {
+      QJniObject activity = QNativeInterface::QAndroidApplication::context();
 
-    app.setStyle("Fusion");
+      if (!activity.isValid())
+      {
+        qWarning() << "Android activity/context not valid";
+        return;
+      }
 
-    QString styleSheet = loadStyleSheet(":/qdarkstyle/darkstyle.qss");
+      QJniObject window =
+        activity.callObjectMethod(
+          "getWindow",
+          "()Landroid/view/Window;");
 
-#ifdef Q_OS_ANDROID
-    styleSheet += R"(
+      if (!window.isValid())
+      {
+        qWarning() << "Android window not valid";
+        return;
+      }
 
-  QWidget {
-      font-size: 18pt;
-  }
+      constexpr int FLAG_KEEP_SCREEN_ON = 128;
 
-  QPushButton,
-  QLineEdit,
-  QSpinBox,
-  QDoubleSpinBox,
-  QTabBar::tab {
-      min-height: 44px;
-      padding: 6px 10px;
-  }
+      window.callMethod<void>(
+        "addFlags",
+        "(I)V",
+        FLAG_KEEP_SCREEN_ON);
 
-  QComboBox {
-      min-height: 44px;
-      padding: 4px 10px;
-  }
-
-  QScrollBar:vertical {
-      width: 32px;
-  }
-
-  QScrollBar:horizontal {
-      height: 32px;
-  }
-  #MidiValueSelectorPopup,
-  #MidiChannelSelectorPopup {
-      background-color: #2b2b2b;
-      border: 1px solid #555555;
-      border-radius: 6px;
-  }
-
-)";
+      qDebug() << "FLAG_KEEP_SCREEN_ON set";
+    });
+}
 #endif
 
-  //QComboBox QAbstractItemView {
-  //    font-size: 18pt;
-  //    min-height: 44px;
-  //    selection-background-color: #D8B85A;
-  //}
+int main(int argc, char* argv[])
+{
+#ifdef Q_OS_ANDROID
+  qputenv("QSG_RHI_BACKEND", "opengl");
+#endif
 
-    app.setStyleSheet(styleSheet);
-    MainWindow w;
-    w.show();
+  QApplication app(argc, argv);
 
-    return app.exec();
+  QQuickStyle::setStyle("Material");
+
+  QCoreApplication::setOrganizationName("NaadaLab");
+  QCoreApplication::setOrganizationDomain("naadalab.com");
+  QCoreApplication::setApplicationName("Morphora");
+
+  SettingsController settingsController;
+
+  QQmlApplicationEngine engine;
+  engine.rootContext()->setContextProperty("SettingsController", &settingsController);
+
+#ifdef NDEBUG
+  constexpr bool debugBuild = false;
+#else
+  constexpr bool debugBuild = true;
+#endif
+  engine.rootContext()->setContextProperty("DebugBuild", debugBuild);
+
+  engine.loadFromModule("MorphMaster", "Main");
+
+  settingsController.loadInstrumentDatabaseAsync(":/Ins/instrument_database.json");
+
+  if (engine.rootObjects().isEmpty())
+    return -1;
+  
+  settingsController.delayedMidiRefreshAfterStartup();
+
+#ifdef Q_OS_ANDROID
+  QTimer::singleShot(500, &app, []()
+    {
+      enableKeepScreenOn();
+    });
+#endif
+
+  bool ret = app.exec();
+  return ret;
 }

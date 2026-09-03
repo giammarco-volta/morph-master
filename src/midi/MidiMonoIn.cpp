@@ -13,14 +13,15 @@ void MidiIn_MonoInterpreter::onInnerEvent(const MidiInEvent& ev)
   }
 
   // 1) Eventi che non vanno propagati
-  if (isControlChange(ev,  7) ||
+  if (/*isControlChange(ev,  7) ||
       isControlChange(ev, 10) ||
       isControlChange(ev, 11) ||
       isControlChange(ev,  0) ||
       isControlChange(ev, 32) ||
       isControlChange(ev, 71) ||
-      isControlChange(ev, 74) ||
-      isProgram(ev))
+      isControlChange(ev, 74) ||*/
+      isProgram(ev) ||
+      isParameterControl(ev))
   {
     return;
   }

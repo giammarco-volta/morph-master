@@ -5,13 +5,15 @@
 		android:required="false" />
 		
     <application
-        android:label="MorphMaster"
-         android:theme="@android:style/Theme.NoTitleBar">
+		android:icon="@mipmap/ic_launcher"
+		android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="Morphora"
+        android:theme="@android:style/Theme.NoTitleBar">
 
         <activity
             android:name="org.qtproject.qt.android.bindings.QtActivity"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
-            android:label="MorphMaster"
+            android:label="Morphora"
             android:screenOrientation="landscape"
             android:exported="true">
 

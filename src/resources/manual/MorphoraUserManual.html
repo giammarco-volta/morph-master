@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Morphora User Manual — QML Draft</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.45;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+    color: #222;
+    background: white;
+}
+h1 {
+    color: #8B3A3A;
+    border-bottom: 2px solid #B06060;
+    padding-bottom: 6px;
+    margin-top: 1.6em;
+}
+h1:first-of-type { margin-top: 0.5em; }
+h2, h3 { color: #15155C; }
+/* Browser/print styling. The tables also carry equivalent inline attributes
+   because the in-app Qt RichText loader removes the document <head>. */
+table.manual-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 1em 0;
+    width: 100%;
+    border: 1px solid #707070;
+}
+table.manual-table th,
+table.manual-table td {
+    border: 1px solid #707070;
+    padding: 6px 9px;
+    text-align: left;
+    vertical-align: top;
+}
+table.manual-table th {
+    background-color: #303030;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+figure { margin: 1.4em 0; }
+figure img { display: block; max-width: 100%; height: auto; margin: 0 auto; border: 1px solid #888; }
+figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: center; }
+.logo {
+    border: none;
+    width: 520px;
+    max-width: 80%;
+    margin: 0 0 24px 0;
+    background: transparent;
+    padding: 0;
+}
+.todo {
+    border: 1px dashed #B06060;
+    background: #fff6f0;
+    padding: 10px 12px;
+    color: #6b2b2b;
+}
+.note {
+    border-left: 4px solid #D8B85A;
+    background: #fffbed;
+    padding: 8px 12px;
+}
+.small { font-size: 0.92em; color: #555; }
+@media print {
+    body { font-size: 11pt; max-width: none; padding: 0; }
+    h1 { page-break-before: always; }
+    h1:first-of-type { page-break-before: auto; }
+    h2, h3, figure, table { page-break-inside: avoid; }
+}
+@page {
+    size: A4;
+    margin: 16mm 16mm 18mm;
+}
+
+@media print {
+    html,
+    body {
+        background: #fff !important;
+        color: #222;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        font-size: 10.5pt;
+    }
+	
+	img[src*="Formula_"] {
+        filter: invert(1);
+    }
+
+    .logo {
+        background: transparent !important;
+        padding: 0 !important;
+    }
+
+    h1 {
+        break-before: page;
+        page-break-before: always;
+    }
+
+    h1:first-of-type {
+        break-before: auto;
+        page-break-before: auto;
+    }
+
+    h1,
+    h2,
+    h3 {
+        break-after: avoid-page;
+        page-break-after: avoid;
+    }
+
+    figure,
+    table,
+    tr,
+    .note,
+    .todo {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+</style>
+</head>
+<body>
+
+    <img class="logo" src="images/NaadaLab_logo_white_on_transparent.svg" alt="NaadaLab logo">
+
+    <h1>Morphora User Manual</h1>
+
+    <h2>Introduction</h2>
+
+    <h3>The Idea Behind Morphora</h3>
+    <p>
+        Morphora grew out of a simple observation. Many workstations, synthesizers and sound modules can play several parts at the same time, but real-time keyboard performance often uses only one sound or a simple layer of two sounds. The multitimbral capacity of the instrument therefore remains largely unused unless it is driven by a sequencer.
+    </p>
+    <p>
+        Morphora was created to make that capacity playable in real time. It turns a single keyboard performance into an expressive combination of several sounds whose relative contribution changes continuously with keyboard position and playing dynamics.
+    </p>
+
+    <h3>What Morphora Does</h3>
+    <p>
+        Morphora is a MIDI performance processor. It receives notes, velocity, sustain, pitch-bend and pressure data from one selected MIDI input channel and controls up to sixteen output tracks on a selected MIDI output device.
+    </p>
+    <p>
+        The sixteen output tracks are organized through eight intermediate processing paths called <strong>Morph Outputs</strong>. Each output track is assigned to one Morph Output. A Morph Output may contain one track, several tracks, or no tracks.
+    </p>
+    <p>
+        For every played note, each Morph Output receives a dynamic gain between <strong>0</strong> and <strong>1</strong>. The gain is calculated from:
+    </p>
+    <ul>
+        <li>the MIDI note number, representing keyboard position;</li>
+        <li>the Note On velocity, representing playing dynamics;</li>
+        <li>or a combination of both.</li>
+    </ul>
+    <p>
+        A <strong>play zone</strong> is a region of the two-dimensional performance space whose horizontal axis is MIDI note number and whose vertical axis is velocity. Low notes, high notes, soft notes and loud notes are play zones. Combined regions such as low and loud, high and soft, or middle-register mezzo-piano notes are play zones as well.
+    </p>
+    <p>
+        Morphora uses eight principal play zones, represented by the following Morph Outputs:
+    </p>
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="24%">Morph Output</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="24%">Controlled by</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="52%">Maximum contribution toward</th></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Low</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Note</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Lower register</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Low and Loud</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Note and velocity</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Lower register, loud dynamics</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Loud</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Velocity</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Loud dynamics</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">High and Loud</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Note and velocity</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Upper register, loud dynamics</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">High</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Note</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Upper register</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">High and Soft</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Note and velocity</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Upper register, soft dynamics</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Soft</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Velocity</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Soft dynamics</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Low and Soft</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="24%">Note and velocity</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="52%">Lower register, soft dynamics</td></tr>
+    </table>
+    <p>
+        For example, the Loud gain approaches 0 when a note is played softly and approaches 1 when it is played loudly. The High gain is low in the lower register and high in the upper register. Low and Soft responds to both axes and is strongest for low, softly played notes.
+    </p>
+    <p>
+        All tracks assigned to the same Morph Output share its gain for the current note. Morphora sends the resulting MIDI data to the assigned output tracks; the target instrument or sound module generates and mixes the audio.
+    </p>
+
+    <figure>
+        <img src="images/Routing.png" alt="Morphora routing through eight Morph Outputs">
+        <figcaption>
+            Incoming performance data from the control track is distributed to eight Morph Outputs. Their gains are calculated from note position, velocity, or both, and the resulting MIDI data is sent to the assigned output tracks of the target sound module.
+        </figcaption>
+    </figure>
+
+    <h3>Tracks and MIDI Channels</h3>
+    <p>
+        In Morphora, a <strong>track</strong> is a logical sound-producing part controlled by the application, while a <strong>channel</strong> is the MIDI channel used to communicate with that part. The mapping is fixed and direct:
+    </p>
+    <ul>
+        <li>Track 1 uses MIDI output channel 1;</li>
+        <li>Track 2 uses MIDI output channel 2;</li>
+        <li>…</li>
+        <li>Track 16 uses MIDI output channel 16.</li>
+    </ul>
+    <p>
+        The MIDI input channel is selected independently and may be any channel from 1 to 16.
+    </p>
+
+    <h3>Who This Manual Is For</h3>
+    <p>
+        Morphora is intended for users who are already familiar with basic multitimbral MIDI configuration, including MIDI channels, Local Off, Bank Select and Program Change. When a term depends on a particular instrument, consult that instrument's MIDI documentation.
+    </p>
+
+    <h1>1. Before You Start</h1>
+
+    <h2>Required MIDI Configuration</h2>
+    <p>
+        Before using Morphora, configure the sending keyboard and the receiving sound engine on the devices themselves. Morphora can select ports, programs and several MIDI parameters, but it cannot create a multitimbral setup on a remote instrument that does not already provide one.
+    </p>
+    <p>You need:</p>
+    <ul>
+        <li>one <strong>control track</strong> that sends performance data to Morphora;</li>
+        <li>at least two receiving parts or tracks on the output device, so that there is something to morph between;</li>
+        <li>a separate MIDI output channel for each Morphora output track in use.</li>
+    </ul>
+
+    <h2>The Control Track and Local Off</h2>
+    <p>
+        The control track should normally be set to <strong>Local Off</strong>, or to the equivalent setting provided by the instrument. It should send notes to Morphora without directly playing the instrument's internal sound engine.
+    </p>
+    <p>
+        If the control track also produces sound locally, that unprocessed sound will be heard together with the tracks controlled by Morphora and may mask the morphing effect.
+    </p>
+
+    <figure>
+        <img src="images/MidiRouting_Single.svg" alt="Morphora routing with one MIDI instrument">
+        <figcaption>Morphora configuration using a single multitimbral MIDI instrument.</figcaption>
+    </figure>
+
+    <h2>Using Separate Input and Output Devices</h2>
+    <p>
+        The MIDI input and output devices do not need to be the same instrument. A master keyboard may provide the control track while a separate workstation, synthesizer or sound module provides the receiving tracks and audio generation.
+    </p>
+
+    <figure>
+        <img src="images/MidiRouting_MultiDevice.svg" alt="Morphora routing with separate input and output devices">
+        <figcaption>Morphora configuration using separate MIDI sender and receiver devices.</figcaption>
+    </figure>
+
+    <h2>Basic Setup Checklist</h2>
+    <ol>
+        <li>Connect the MIDI input and output devices to the computer or tablet.</li>
+        <li>Prepare one control track on the input device and set it to Local Off.</li>
+        <li>Prepare the receiving parts on MIDI channels 1–16 as required.</li>
+        <li>Select the MIDI input device and input channel in Morphora.</li>
+        <li>Select the MIDI output device.</li>
+        <li>Assign at least two output tracks to Morph Outputs.</li>
+        <li>Select programs and adjust track parameters.</li>
+        <li>Play and verify the result in the Morph Monitor.</li>
+    </ol>
+	
+	
+	
+	<section id="musical-design-approaches">
+	  <h1>2. Musical Design Approaches</h1>
+	  
+	  <p>
+		Although Morphora always uses the same continuous morphing engine, the musical objective may be very different. In some cases, the goal is to create a single expressive instrument with a unique personality. In others, it is to create the impression of an ensemble that follows a single musical gesture. The following sections describe these two complementary design approaches.
+	  </p>
+
+	  <section id="instrument-design">
+		<h2>Instrument Design</h2>
+
+		<h3>Goal</h3>
+		<p>
+		  Create a single expressive instrument whose timbre evolves naturally
+		  with pitch and playing dynamics.
+		</p>
+
+		<h3>Concept</h3>
+		<p>
+		  Instead of layering instruments or switching between them at predefined
+		  split points, Morphora continuously combines different sound sources.
+		  The performer experiences a single coherent instrument, while different
+		  instruments contribute where they are most effective.
+		</p>
+
+		<h3>Typical example</h3>
+		<ul>
+		  <li><strong>Soft dynamics</strong> &rarr; mellow upright piano</li>
+		  <li><strong>Low &amp; Loud</strong> &rarr; clavinet</li>
+		  <li><strong>High &amp; Loud</strong> &rarr; Wurlitzer</li>
+		</ul>
+
+		<p>
+		  The listener perceives a single keyboard instrument with an unusually
+		  rich and expressive character, rather than three separate sounds.
+		</p>
+
+		<blockquote>
+		  <p>
+			The more successful the design, the less attention it draws to the
+			fact that multiple instruments are involved.
+		  </p>
+		</blockquote>
+	  </section>
+
+	  <section id="ensemble-design">
+		<h2>Ensemble Design</h2>
+
+		<h3>Goal</h3>
+		<p>
+		  Create the impression of an ensemble controlled by a single performer.
+		</p>
+
+		<h3>Concept</h3>
+		<p>
+		  Each Morph Output drives a different instrument, but transitions are
+		  continuous rather than based on fixed keyboard splits or velocity
+		  thresholds.
+		</p>
+
+		<p>
+		  The performer plays naturally, while the ensemble adapts to register
+		  and dynamics.
+		</p>
+
+		<h3>Typical example</h3>
+		<ul>
+		  <li><strong>Low</strong> &rarr; double bass</li>
+		  <li><strong>High &amp; Soft</strong> &rarr; acoustic grand piano</li>
+		  <li><strong>High &amp; Loud</strong> &rarr; vibraphone</li>
+		</ul>
+
+		<p>
+		  Additional Morph Outputs may reinforce the overall timbre without being
+		  perceived as distinct instruments.
+		</p>
+
+		<p>
+		  The result is not a conventional layered setup, but an ensemble that
+		  breathes with the musical gesture.
+		</p>
+	  </section>
+
+	  <section id="why-continuous-morphing-matters">
+		<h2>Why Continuous Morphing Matters</h2>
+
+		<p>
+		  Traditional keyboard setups often require decisions such as:
+		</p>
+
+		<ul>
+		  <li>keyboard splits;</li>
+		  <li>velocity switching;</li>
+		  <li>fixed layers;</li>
+		  <li>crossfades.</li>
+		</ul>
+
+		<p>
+		  These techniques inevitably introduce audible or perceptual boundaries.
+		</p>
+
+		<p>
+		  Morphora removes those boundaries by making every transition continuous.
+		</p>
+
+		<p>
+		  The performer no longer has to think about where one sound ends and
+		  another begins: the musical gesture itself determines the resulting
+		  timbre.
+		</p>
+	  </section>
+	</section>
+	
+
+    <h1>3. User Interface Overview</h1>
+
+    <h2>Navigation Rail</h2>
+    <p>
+        The vertical navigation rail on the left provides direct access to the main pages:
+    </p>
+    <ul>
+        <li><strong>Morph Output Assignment</strong> — assign, mute and solo output tracks.</li>
+        <li><strong>MIDI and Settings</strong> — select MIDI devices, performance options and presets. On phone layouts this is divided into MIDI Settings and Settings.</li>
+        <li><strong>Tracks</strong> — configure the sixteen output tracks.</li>
+        <li><strong>Morph Curves</strong> — edit the global note and velocity morph curves.</li>
+        <li><strong>Morph Monitor</strong> — view real-time gains and notes, and use the Keyboard for tests.</li>
+        <li><strong>Manual</strong> — open this manual inside the application.</li>
+        <li><strong>About</strong> — version, credits, website and contact information.</li>
+    </ul>
+
+    <figure>
+        <img src="images/NavigationRailAndOneSelectedPage.png" alt="Navigation Rail And One Selected Page">
+        <figcaption>
+            Full tablet/desktop interface - navigation rail.
+        </figcaption>
+    </figure>
+
+    <h2>Phone, Tablet and Desktop Layouts</h2>
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="28%">Area</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="34%">Phone</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="38%">Tablet/Desktop</th></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">MIDI and Settings</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Two separate pages</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Combined page with Configuration Overview</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">Tracks</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">One track per page</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Four tracks per page in a 2×2 grid</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">Morph Curves</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">One curve per page</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Both curves and four corner surfaces together</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">Keyboard</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Six pages of 28 notes</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Fixed or range-adapted keyboard, one or two rows</td></tr>
+    </table>
+    <p>
+        When a page has multiple subpages, previous and next arrows appear in the page header.
+    </p>
+
+    <h2>Editing Numeric Values</h2>
+    <p>
+        Most editable numeric fields support two input methods. Drag a finger or pointer upward or to the right to increase the value, and downward or to the left to decrease it. For direct entry, long-press the field to open a numeric keypad and type the required value. The permitted range of the control still applies.
+    </p>
+
+    <h1>4. Morph Output Assignment</h1>
+
+    <h2>Page Layout</h2>
+    <p>
+        The eight Morph Outputs are arranged around a central <strong>Unassigned Output Tracks</strong> pool. Their positions follow the note/velocity performance space:
+    </p>
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="33%">Low and Loud</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Loud</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="33%">High and Loud</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="33%">Low</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Unassigned Output Tracks</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="33%">High</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="33%">Low and Soft</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Soft</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="33%">High and Soft</td></tr>
+    </table>
+
+    <figure>
+        <img src="images/MorphOutputAssignment.png" alt="Morph Output Assignment">
+        <figcaption>
+            Morph Output Assignment page.
+        </figcaption>
+    </figure>
+
+    <h2>Assigning a Track</h2>
+    <ol>
+        <li>Locate the track tile in its current panel.</li>
+        <li>Drag it to the desired Morph Output.</li>
+        <li>Release it when the destination panel is highlighted.</li>
+    </ol>
+    <p>
+        To remove an assignment, drag the tile back to the central Unassigned Output Tracks panel. A track can belong to only one Morph Output at a time, while a Morph Output can contain multiple tracks.
+    </p>
+    <p>
+        On phone layouts, compact track tiles show only the track number. On larger layouts they show “Track” followed by the number.
+    </p>
+
+    <h2>Opening a Track Editor</h2>
+    <p>
+        Long-press an assigned track tile to open the corresponding Track page. Long press is intentionally disabled in the Unassigned Output Tracks pool because an unassigned track has no active sound configuration in the performance routing.
+    </p>
+
+    <h2>Morph Output Names</h2>
+    <p>
+        Each Morph Output has a fixed generic name, such as <strong>Low</strong>, <strong>Soft</strong> or <strong>High and Loud</strong>, and may also be given a user-defined name. A descriptive name such as “piano”, “strings” or “brass layer” makes the purpose of the output easier to recognize in Morph Monitor than the track list alone. Morph Output names are stored in the preset.
+    </p>
+
+    <figure>
+        <img src="images/EditingMorphOutputName.png" alt="Editing a Morph Output name">
+        <figcaption>
+            Editing the user-defined name of a Morph Output.
+        </figcaption>
+    </figure>
+
+    <h2>Mute and Solo</h2>
+    <p>
+        Each Morph Output has two dedicated buttons on the Morph Output Assignment page:
+    </p>
+    <ul>
+        <li><strong>M</strong> sets the Morph Output to Muted.</li>
+        <li><strong>S</strong> sets the Morph Output to Soloed.</li>
+    </ul>
+    <p>
+        Normal, Muted and Soloed are mutually exclusive states. When one or more Morph Outputs are Soloed, only those outputs remain active.
+    </p>
+    <p>
+        The same three states can also be selected by tapping the generic Morph Output name. Each tap cycles through <strong>Normal → Muted → Soloed → Normal</strong>. A muted output shows an <strong>M</strong> suffix and a soloed output shows an <strong>S</strong> suffix beside its generic name. This name-tap control and the M/S status indication are available both in Morph Output Assignment and in Morph Monitor, so the state can be checked or changed without switching pages. Mute and Solo states are stored in presets.
+    </p>
+
+    <figure>
+        <img src="images/MutedMorphOutput.png" alt="Muted Morph Output">
+        <figcaption>
+            A muted Morph Output.
+        </figcaption>
+    </figure>
+
+    <figure>
+        <img src="images/SoloedMorphOutput.png" alt="Soloed Morph Output">
+        <figcaption>
+            A soloed Morph Output.
+        </figcaption>
+    </figure>
+
+    <h1>5. MIDI and Settings</h1>
+
+    <p>
+        In tablet and desktop profiles Midi settings, Performance, Presets and Configuration overview are displayed in a single page.
+    </p>
+
+    <figure>
+        <img src="images/ConfigurationPage.png" alt="Configuration Page">
+        <figcaption>
+            Configuration page in tablet and desktop profiles.
+        </figcaption>
+    </figure>
+
+    <h2>MIDI Input</h2>
+
+    <figure>
+        <img src="images/MidiSettings.png" alt="Midi Settings">
+        <figcaption>
+            Midi Settings.
+        </figcaption>
+    </figure>
+
+    <p>
+        Select the device that sends the control-track performance to Morphora. Press <strong>Refresh</strong> after connecting or disconnecting a device if the list is not updated automatically.
+    </p>
+    <p>
+        Use <strong>Input Channel</strong> to select the MIDI channel used by the control track. Morphora listens to that channel and ignores note data received on other channels.
+    </p>
+
+    <h3>Ignore Preset CCs</h3>
+    <p>
+        Some Control Change messages correspond to values that are already part of the Morphora track setup, including Volume, Pan, Reverb, Chorus, Harmonic Content and Brightness. Incoming versions of these messages can be useful when the control track is driven by a recorded MIDI sequence. For example, a fade-out recorded as Volume CC7 should be replicated on the Morphora output tracks so that the transformed performance follows the same fade-out.
+    </p>
+    <p>
+        However, these incoming controllers may conflict with the values stored in the preset. The <strong>Ignore Preset CCs</strong> option therefore determines whether setup-related CCs received on the input channel are discarded or forwarded to the assigned output tracks. Leave it enabled to protect the preset setup; disable it only when the incoming sequence is intentionally expected to control those parameters.
+    </p>
+    <p>
+        Expression CC11 is a special case. It can be forwarded in Poly mode when Ignore Preset CCs is disabled, but it is never forwarded in Mono mode because Morphora uses CC11 internally to perform the Morph Output crossfades. The complete forwarding rules are listed in Chapter 11.
+    </p>
+
+    <h2>MIDI Output</h2>
+    <p>
+        Select the device that contains the receiving parts or tracks. Morphora sends Track 1 to output channel 1, Track 2 to channel 2, and so on through Track 16/channel 16.
+    </p>
+    <p>
+        Press the output <strong>Refresh</strong> button after changing the connected MIDI devices.
+    </p>
+
+    <h2>Reset Commands</h2>
+    <h3>GM2 Reset</h3>
+    <p>
+        Sends the standard General MIDI 2 Reset SysEx message to the selected output device. Because the reset also restores registered parameters, Morphora reapplies its channel fine tuning and Pitch Bend Range settings afterward.
+    </p>
+    <h3>Channel Soft Reset</h3>
+    <p>
+        Opens a 4×4 channel selector. Choosing a channel sends Sustain Off, All Notes Off and Reset All Controllers to that channel, then reapplies the track tuning and Pitch Bend Range. Use it when one channel needs to be recovered without resetting the entire sound module.
+    </p>
+
+    <figure>
+        <img src="images/ChannelSoftReset.png" alt="Channel Soft Reset">
+        <figcaption>
+            Soft Reset channel selection.
+        </figcaption>
+    </figure>
+
+    <h2>Performance Settings</h2>
+
+    <h3>Program Selection</h3>
+    <p>
+        Morphora offers two program-selection modes.
+    </p>
+    <h4>Instrument Definition</h4>
+    <p>
+        Select a supported instrument from the database. Each Track editor then provides an instrument-program browser containing the complete set of programs available in that instrument definition. Morphora uses the selected entry to send the required Bank Select and Program Change values automatically.
+    </p>
+    <h4>Manual</h4>
+    <p>
+        Each Track editor provides Bank MSB, Bank LSB and Program controls. The Program list displays the 128 General MIDI program names as a reference; the actual sound depends on the selected bank and on the target instrument.
+    </p>
+	
+    <figure>
+        <img src="images/Performance.png" alt="Performance settings">
+        <figcaption>
+            Performance settings.
+        </figcaption>
+    </figure>
+
+    <h3>Pitch Bend Range</h3>
+    <p>
+        Sets the pitch-bend sensitivity from 0 to 24 semitones. Morphora sends the value to assigned output tracks using RPN 0,0 and forwards incoming Pitch Bend messages to those tracks.
+    </p>
+
+    <figure>
+        <img src="images/PitchBendRangeSelection.png" alt="Pitch Bend Range Selection">
+        <figcaption>
+            Pitch Bend Range Selection.
+        </figcaption>
+    </figure>
+
+    <h3>Keyboard Range</h3>
+    <p>
+        Keyboard Range defines the note interval used by the Low/High curve and by the range-adapted Keyboard view.
+    </p>
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="38%">Selection</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="62%">MIDI notes</th></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Full</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">0–127</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">88 keys</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">21–108</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">76 keys</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">28–103</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">73 keys</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">24–96</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">61 keys</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">36–96</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">49 keys</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">36–84</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">37 keys</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">48–84</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">25 keys</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="62%">48–72</td></tr>
+    </table>
+
+    <h3>Play Mode</h3>
+    <p>
+        Select <strong>Poly</strong> for polyphonic playing or <strong>Mono</strong> for last-note-priority monophonic playing. The detailed behavior is described in the Performance Behavior chapter.
+    </p>
+
+    <h2>Presets</h2>
+
+    <figure>
+        <img src="images/Presets.png" alt="Presets">
+        <figcaption>
+            Presets interface.
+        </figcaption>
+    </figure>
+
+    <p>
+        A preset stores the complete Morphora performance configuration, including:
+    </p>
+    <ul>
+        <li>MIDI input and output ports and input channel;</li>
+        <li>Program Selection mode and selected instrument;</li>
+        <li>Keyboard Range, Pitch Bend Range and Play Mode;</li>
+        <li>Mute and Solo states;</li>
+        <li>all sixteen track assignments and parameters;</li>
+        <li>the two global morph curves;</li>
+        <li>optional preset notes.</li>
+    </ul>
+    <ul>
+        <li><strong>Save</strong> updates the selected preset.</li>
+        <li><strong>Save As…</strong> stores the current configuration under the entered name.</li>
+        <li><strong>Delete</strong> removes the selected preset.</li>
+    </ul>
+    <p>
+        Save and Delete are disabled when no preset is selected. Selecting a preset recalls it immediately and releases currently sounding notes before applying the configuration.
+    </p>
+    <p>
+        The complete track setup is transmitted every time a preset is selected, even when it is the preset that is already current. Reselecting the current preset can therefore be used as a convenient refresh command to resend its Bank Select, Program Change, mixer, effects, timbre, tuning and related setup messages to the output device.
+    </p>
+
+    <h3>Preset Notes</h3>
+    <p>
+        A Morphora preset often depends on companion operations that must be performed on the remote keyboard or sound module and cannot be carried out by Morphora itself. Each preset can therefore contain free-form notes that serve as a setup reminder.
+    </p>
+    <p>
+        Typical notes may specify which control track must be set to Local Off, which tracks or zones must be prepared on the instrument, whether an insert effect must be enabled, and which MIDI input and output settings on the remote device must correspond to the Morphora configuration.
+    </p>
+
+    <figure>
+        <img src="images/EditPresetNotes.png" alt="Editing preset notes">
+        <figcaption>
+            Preset notes used as a reminder of the required remote-instrument setup.
+        </figcaption>
+    </figure>
+
+    <h2>Configuration Overview</h2>
+    <p>
+        On tablet and desktop layouts, the lower part of MIDI and Settings shows the current signal path: input device and channel, Morphora performance settings, Morph Output assignments and output device. Only Morph Outputs containing tracks show active outgoing lanes.
+    </p>
+
+    <figure>
+        <img src="images/ConfigurationOverview.png" alt="Configuration Overview">
+        <figcaption>
+            Configuration Overview.
+        </figcaption>
+    </figure>
+
+    <h1>6. Tracks</h1>
+
+    <h2>Track Pages</h2>
+    <p>
+        Morphora provides sixteen output tracks. Tablet and desktop layouts show four at a time in pages 1–4, 5–8, 9–12 and 13–16. The phone layout shows one track at a time.
+    </p>
+    <p>
+        A track becomes active only after it is assigned to a Morph Output. When Assigned Morph Output is set to <strong>None</strong>, all other controls are disabled.
+    </p>
+
+    <figure>
+        <img src="images/TracksSettings.png" alt="Tracks Settings">
+        <figcaption>
+            Tracks settings.
+        </figcaption>
+    </figure>
+
+    <h2>Assigned Morph Output</h2>
+    <p>
+        Use this selector to assign the track directly without returning to the Assignment page. The available values are None and the eight Morph Outputs. Long-press the selector to open Morph Output Assignment.
+    </p>
+
+    <h2>Detune Offset</h2>
+    <p>
+        Detune Offset applies a fixed per-track tuning adjustment from −50 to +50 cents. It is added to the fine-tuning correction required by the selected Footage.
+    </p>
+
+    <h2>Detune Spread</h2>
+
+    <p>
+        The <strong>Detune Spread</strong> control introduces a controlled amount of
+        pitch variation around the track's Detune Offset value. Its purpose is to make
+        the tuning less mechanically exact and more similar to the small intonation
+        variations found in acoustic instruments.
+    </p>
+
+    <p>
+        The detune value is calculated and sent at the beginning of each musical phrase.
+        Once selected, it remains unchanged until the phrase ends. A new value is then
+        calculated at the beginning of the following phrase. This behaviour is the same
+        in both <strong>Poly</strong> and <strong>Mono</strong> play modes.
+    </p>
+
+    <p>
+        The result is partly random and partly influenced by the velocity of the note
+        that begins the phrase. Higher velocities tend to produce values in the upper
+        part of the available detune range, while lower velocities tend to produce
+        values in its lower part. The result nevertheless remains random, so repeated
+        phrases played at the same velocity do not necessarily receive exactly the same
+        detuning.
+    </p>
+
+    <h2>Instrument Selection</h2>
+    <h3>Instrument Definition Mode</h3>
+    <p>
+        Open the Program control to display a browser containing the programs available for the currently selected instrument definition. When the browser opens, it shows the complete list and the total number of available programs. If a program is already selected, it remains visible in the Current program area and the list is positioned around its entry whenever possible.
+    </p>
+    <p>
+        Use <strong>Search name…</strong> to filter the list by program name. The search accepts multiple words: only entries containing all the entered words are shown, regardless of their order in the program name. Use <strong>Program #</strong> to find every entry that uses a particular MIDI Program number, including matching programs in different banks. The result counter shows the number of matching entries and the total number of programs in the instrument definition.
+    </p>
+    <p>
+        Selecting an entry closes the browser and Morphora automatically sends the Bank Select and Program Change values defined for it.
+    </p>
+
+    <figure>
+        <img src="images/InstrumentSearchAll.png" alt="Complete instrument program list">
+        <figcaption>
+            The complete program list, centered on the current selection.
+        </figcaption>
+    </figure>
+
+    <figure>
+        <img src="images/InstrumentSearchFiltered.png" alt="Instrument programs filtered by name">
+        <figcaption>
+            Filtering the available programs by name.
+        </figcaption>
+    </figure>
+
+    <figure>
+        <img src="images/InstrumentSearchFiltered2Words.png" alt="Instrument programs filtered by two words">
+        <figcaption>
+            A multiple-word search: every displayed program contains both search terms.
+        </figcaption>
+    </figure>
+
+    <figure>
+        <img src="images/InstrumentSearchFilteredByProgram.png" alt="Instrument programs filtered by MIDI program number">
+        <figcaption>
+            Filtering all banks by MIDI Program number.
+        </figcaption>
+    </figure>
+
+    <h3>Manual Mode</h3>
+    <p>
+        Enter Bank MSB and Bank LSB, then select a Program. Changing the Program sends the complete bank/program sequence to the track's MIDI channel.
+    </p>
+
+    <figure>
+        <img src="images/InstrumentDefinitionTrack.png" alt="Instrument Definition Track">
+        <figcaption>
+            Instrument Definition Track.
+        </figcaption>
+    </figure>
+
+    <figure>
+        <img src="images/ManualModeTrack.png" alt="Manual Mode Track">
+        <figcaption>
+            Manual Mode Track.
+        </figcaption>
+    </figure>
+
+    <h2>Footage</h2>
+    <p>
+        Footage transposes a track to a harmonic interval inspired by pipe-organ ranks and drawbar organs. Non-octave footage values also include the cents correction required for the corresponding natural harmonic.
+
+    <p>
+        At first sight, the Footage control may appear unrelated to the morphing
+        concept described in the previous sections. In reality, it is fully
+        consistent with Morphora's goal of helping musicians explore sounds
+        and timbral combinations that would be difficult or impossible to create
+        on most MIDI keyboards.
+    </p>
+
+    <p>
+        The Footage control is inspired by the tradition of pipe organs and
+        drawbar organs such as the Hammond. In these instruments, a complex
+        sound is created by combining multiple components at different harmonic
+        intervals.
+    </p>
+
+    <p>
+        In a pipe organ, the components are individual ranks of pipes. In a
+        drawbar organ, they are generated by separate oscillators. In
+        Morphora, the components are the individual tracks and the sounds
+        assigned to them.
+    </p>
+
+    <p>
+        This makes it possible to build original timbres using an additive
+        synthesis approach, where different programs are combined at harmonic
+        intervals relative to a fundamental sound.
+    </p>
+
+    </p>
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="28%">Footage</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="36%">Semitone transposition</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="36%">Fine tuning</th></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">16'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">−12</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">0 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">8'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">0</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">0 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">5 1/3'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+7</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+2 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">4'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+12</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">0 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">2 2/3'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+19</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+2 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">2'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+24</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">0 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">1 3/5'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+28</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">−14 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">1 1/3'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+31</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+2 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">1 1/7'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+34</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">−31 cent</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">1'</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">+36</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="36%">0 cent</td></tr>
+    </table>
+
+    <p>
+        For example, try combining:
+    </p>
+
+    <ul>
+        <li>a Baritone Sax at 8'</li>
+        <li>a Clarinet at 2&nbsp;2/3'</li>
+        <li>a Flute at 1&nbsp;3/5'</li>
+    </ul>
+
+    <p>
+        The resulting timbre is often surprising and can be quite different
+        from any of the individual sounds used to create it.
+    </p>
+
+    <p>
+        The real power of the Footage control emerges when it is combined with
+        Morphora's morphing engine.
+    </p>
+
+    <p>
+        For example, imagine creating a custom additive timbre using the three
+        tracks described above and assigning them to the High morph output.
+        Then assign a Brass Ensemble sound to the Low morph output.
+    </p>
+
+    <p>
+        When playing in the lower register, the Brass Ensemble will dominate the
+        sound. As notes move towards the upper register, the contribution of the
+        Brass Ensemble gradually decreases while the custom additive timbre
+        becomes increasingly prominent.
+    </p>
+
+    <p>
+        The result is not merely a transition between two preset sounds, but a
+        continuous evolution between fundamentally different sound structures.
+        This combination of additive sound design and real-time morphing is one
+        of the most distinctive features of Morphora.
+    </p>
+
+    <p>
+        The combined fine tuning from Footage, Detune Offset and Detune Spread is limited to ±100 cents and is sent as Channel Fine Tuning RPN 0,1.
+    </p>
+
+    <h2>Mixer and Timbre Controls</h2>
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="14%">Control</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="14%">Range</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="72%">MIDI behavior</th></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">Volume</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">0–127</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="72%">CC7</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">Pan</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">−64…+63</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="72%">CC10, centered at 64</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">Reverb</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">0–127</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="72%">CC91</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">Chorus</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">0–127</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="72%">CC93</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">Tone</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">−64…+63</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="72%">Expressive modulation amount used to calculate MIDI CC71</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">Timbre</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="14%">−64…+63</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="72%">Expressive modulation amount used to calculate MIDI CC74</td></tr>
+    </table>
+    <p>
+        Volume, Pan, Reverb and Chorus are sent directly when their values are changed.
+        Tone and Timbre behave differently: the values shown in Track Settings are not
+        sent directly as MIDI CC values.
+    </p>
+
+    <p>
+        Instead, Morphora combines each track's Tone and Timbre settings with the
+        current Expression value. The resulting values are calculated dynamically and
+        sent respectively as MIDI CC71 and CC74. This produces a more natural expressive
+        response, because the tonal change follows the evolution of the played phrase
+        rather than remaining fixed at the value selected in Track Settings.
+    </p>
+
+    <p>
+        A value of <strong>0</strong> is neutral. Positive and negative values determine
+        the direction and amount of the contribution applied by the expressive
+        calculation.
+    </p>
+    <p>
+        These controls form part of the preset's track setup. When the input source is a recorded MIDI sequence, equivalent incoming CC messages can optionally be replicated on all assigned output tracks by disabling <strong>Ignore Preset CCs</strong>. This is useful for recorded automation, but it should be enabled consciously because the incoming data may conflict with the setup stored in the preset. See Chapter 11 for the exact forwarding rules.
+    </p>
+
+    <h1>7. Morph Curves</h1>
+
+    <h2>Two Global Curve Pairs</h2>
+    <p>
+        Morphora uses two global curve pairs for the entire preset:
+    </p>
+    <ul>
+        <li>
+            <strong>Low and High Morph Curves</strong>, evaluated using the MIDI note number to obtain the keyboard-position gain component.
+        </li>
+        <li>
+            <strong>Soft and Loud Morph Curves</strong>, evaluated using Note On velocity to obtain the dynamics gain component.
+        </li>
+    </ul>
+    <p>
+        Tracks no longer select individual curve numbers. Their Morph Output determines which global curve or combination of curves is used.
+    </p>
+
+    <h2>Curve Definition</h2>
+    <p>
+        Each editable response is defined by two points: `(x1, y1)` and `(x2, y2)`.
+    </p>
+    <ul>
+        <li>Before x1, the response remains at y1.</li>
+        <li>Between x1 and x2, the response moves continuously from y1 to y2.</li>
+        <li>After x2, the response remains at y2.</li>
+        <li>x1 must remain lower than x2.</li>
+        <li>y values range from 0 to 100.</li>
+    </ul>
+    <p>
+        For the note curve, X follows the selected Keyboard Range. For the velocity curve, X always ranges from 0 to 127.
+    </p>
+
+    <p>
+        The curves themselves are not dynamically modified during performance.
+        Each curve is defined by two control points. Outside the interval between
+        those points the response is horizontal, while the transition between them
+        follows an equal-power quarter-sine or quarter-cosine shape.
+    </p>
+
+    <p>
+        During performance, Morphora evaluates the Low/High curve using the
+        MIDI note number and the Soft/Loud curve using Note On velocity. The
+        resulting values determine the gain components applied to the Morph Outputs.
+        For corner Morph Outputs, the keyboard-position and velocity components are
+        combined to obtain the final gain.
+    </p>
+
+    <p>
+        For corner Morph Outputs, the final normalized gain is calculated as:
+        <strong>gain = keyboard gain × velocity gain</strong>.
+    </p>
+
+    <h2>Equal-Power Curves</h2>
+    <p>
+        The graph displays two complementary equal-power gains. One is derived with a sine response and the other with the corresponding cosine response. This provides a smoother perceived crossfade than a pair of simple linear amplitude ramps.
+    </p>
+    <p>
+        The two handles belong to the primary curve. Move them directly on the graph, or edit x1, y1, x2 and y2 with the numeric drag fields.
+    </p>
+
+    <h2>Corner Morph Surfaces</h2>
+    <p>
+        The four corner Morph Outputs use both global curves. For the side Morph
+        Outputs, gain depends on only one performance variable: MIDI note position
+        for Low and High, or Note On velocity for Soft and Loud. Their response
+        can therefore be represented by a one-dimensional curve, such as
+
+<p align="center">
+            <img src="images/Formula_SideOutputs.svg" alt="z = f(x); z = g(y)">
+        </p>
+
+    </p>
+
+    <p>
+        The corner Morph Outputs depend on both variables simultaneously. Their gain
+        is therefore a two-variable function
+    </p>
+
+        <p align="center">
+            <img src="images/Formula_CornerSurface.svg" alt="z = h(x, y)">
+        </p>
+
+        <p>
+            where the Low/High curve provides the keyboard-position component and the
+            Soft/Loud curve provides the velocity component. These two components act along
+            orthogonal axes and are combined to produce the final gain.
+        </p>
+
+    <p>
+        In the current implementation, the normalized corner gain is calculated as
+    </p>
+
+        <p align="center">
+            <img src="images/Formula_CornerGain.svg" alt="h(x, y) = f(x)g(y)">
+        </p>
+
+    <p>
+        The resulting function is naturally represented as a three-dimensional surface,
+        with note position and velocity on the two horizontal axes and gain on the vertical axis.
+    </p>
+
+    <p>
+        On tablet and desktop, four small 3D graphs show these surfaces for
+        <strong>Low and Soft</strong>, <strong>Low and Loud</strong>,
+        <strong>High and Soft</strong>, and <strong>High and Loud</strong>.
+        They make it possible to see how the two global curves interact and how the
+        gain rises or falls across the complete note-position and velocity plane.
+    </p>
+
+    <figure>
+        <img src="images/TabletCurveEditor.png" alt="Tablet Curve Editor">
+        <figcaption>
+            Curve definition in tablet and desktop profiles.
+        </figcaption>
+    </figure>
+
+    <h2>Phone Layout</h2>
+    <p>
+        On a phone, only one curve pair is shown at a time. Use the page arrows to switch between Low/High and Soft/Loud.
+    </p>
+
+    <figure>
+        <img src="images/PhoneCurveEditor.png" alt="Phone Curve Editor">
+        <figcaption>
+            Curve definition in phone profile.
+        </figcaption>
+    </figure>
+
+    <h1>8. Morph Monitor</h1>
+
+    <h2>Monitor Layout</h2>
+    <p>
+        The Morph Monitor uses the same 3×3 arrangement as Morph Output Assignment. The center contains a Keyboard. The eight surrounding panels show the current response of the Morph Outputs.
+    </p>
+    <ul>
+        <li>Low, High, Soft and Loud use 2D curve graphs.</li>
+        <li>The four combined Morph Outputs use 3D surfaces.</li>
+        <li>Each header shows the generic Morph Output name, its optional user-defined name and a compact list of assigned tracks.</li>
+        <li>Panels with no assigned tracks display “No tracks”.</li>
+    </ul>
+
+    <figure>
+        <img src="images/MorphMonitor.png" alt="Morph Monitor">
+        <figcaption>
+            Morph Monitor page in tablet and desktop profiles.
+        </figcaption>
+    </figure>
+
+    <h2>Real-Time Feedback</h2>
+    <p>
+        Red points show played notes at their positions on the relevant curve or surface. Each panel also contains a red gain indicator from 0.00 to 1.00. When several notes are active, the displayed Morph Output level follows the maximum current gain for that output.
+    </p>
+    <p>
+        The keyboard highlights sounding notes in red. Notes outside the configured Keyboard Range appear gray in the fixed 88-key view.
+    </p>
+
+    <h2>Mute and Solo in Morph Monitor</h2>
+    <p>
+        Morph Monitor shows an <strong>M</strong> or <strong>S</strong> suffix beside the generic name of every Muted or Soloed Morph Output. Tap the generic name to cycle through Normal, Muted and Soloed without returning to Morph Output Assignment.
+    </p>
+
+    <h2>Opening the Curve Editor</h2>
+    <p>
+        Long-press any Morph Monitor panel to open Morph Curves. A side output selects the relevant global curve on phone layouts; a corner output uses both curves.
+    </p>
+
+    <h2>Keyboard on Tablet and Desktop</h2>
+    <p>
+        An adapted range of 49 keys or fewer is displayed on one row; larger ranges use two rows.
+    </p>
+
+    <h2>Keyboard on Phone</h2>
+    <p>
+        The phone layout uses six overlapping pages of 28 notes. Use the arrows in the keyboard header to move between them. The header displays the current MIDI note range.
+    </p>
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="12%">Page</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="28%">MIDI range</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="60%">Approximate musical range</th></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="12%">1</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">21–48</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="60%">A0–C3</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="12%">2</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">33–60</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="60%">A1–C4</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="12%">3</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">45–72</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="60%">A2–C5</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="12%">4</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">57–84</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="60%">A3–C6</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="12%">5</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">69–96</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="60%">A4–C7</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="12%">6</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">81–108</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="60%">A5–C8</td></tr>
+    </table>
+
+    <figure>
+        <img src="images/PhoneMorphMonitor.png" alt="Phone Morph Monitor">
+        <figcaption>
+            Morph Monitor page in phone profile.
+        </figcaption>
+    </figure>
+
+    <h2>Playing the Test Keyboard</h2>
+    <p>
+        Click or touch a key to generate a test note. Vertical position determines velocity: playing nearer the top of a key produces a lower velocity, while playing nearer the bottom produces a higher velocity. Multitouch permits up to ten simultaneous touch points.
+    </p>
+
+    <h1>9. Performance Behavior</h1>
+
+    <h2>Poly Mode</h2>
+    <p>
+        Poly mode allows multiple notes to sound simultaneously. For each output track, Morphora multiplies the incoming Note On velocity by the gain of that track's Morph Output. A note whose resulting velocity is zero is not sent to that track.
+    </p>
+    <p>
+        Because the gain is applied per Note On, simultaneous notes at different keyboard positions and velocities can produce different blends.
+    </p>
+
+    <h2>Mono Mode</h2>
+    <p>
+        Mono mode uses last-note priority. When a new note is played, the previous sounding note is released and the new note becomes active. Notes that remain physically held are remembered. When the current note is released, the most recently played held note is retriggered.
+    </p>
+    <p>
+        The retrigger velocity is taken from the Note Off velocity of the released note. If the device sends zero Note Off velocity, Morphora uses 64.
+    </p>
+    <p>
+        In Mono mode, Morph Output gain is sent as Expression CC11 on each assigned output track, while the Note On velocity itself is preserved.
+    </p>
+
+    <h2>Sustain</h2>
+    <p>
+        Incoming sustain pedal data (CC64) is forwarded to assigned, enabled output tracks. Morph Monitor feedback and phrase state retain sustained notes until the pedal is released.
+    </p>
+
+    <h2>Pitch Bend</h2>
+    <p>
+        Incoming Pitch Bend data is forwarded to every assigned, enabled output track. Use Pitch Bend Range in Settings to keep the target parts aligned with the controller's intended bend range.
+    </p>
+
+    <h2>Mute and Solo During Performance</h2>
+    <p>
+        Muted Morph Outputs do not receive notes, sustain, pitch bend, pressure or forwarded controllers. When any Morph Output is Soloed, only the Soloed outputs are enabled. Normal, Muted and Soloed are mutually exclusive states for each Morph Output.
+    </p>
+
+    <h2>No Assigned Tracks Warning</h2>
+    <p>
+        If MIDI input is received while no tracks are assigned to any Morph Output, Morphora displays a temporary banner directing you to Morph Output Assignment or Tracks.
+    </p>
+
+    <h1>10. Manual and About</h1>
+
+    <h2>Manual</h2>
+    <p>
+        The Manual page displays this HTML document inside Morphora. It is scrollable and supports headings, formatted text, lists, tables, images and captions.
+    </p>
+
+    <h2>About</h2>
+    <p>
+        The About page contains the application version, credits, website, contact address, license information and a link that opens the Manual page.
+    </p>
+
+    <h1>11. Troubleshooting</h1>
+
+    <h2>MIDI Input Is Received but No Sound Is Produced</h2>
+    <ul>
+        <li>Verify that at least one track is assigned to a Morph Output.</li>
+        <li>Verify the MIDI output device.</li>
+        <li>Verify that the corresponding receiving channel is enabled on the sound module.</li>
+        <li>Check Mute and Solo states.</li>
+        <li>Check whether the current gain for that play zone is near zero.</li>
+    </ul>
+
+    <h2>The Control Track Is Heard Together with Morphora</h2>
+    <p>
+        Set the control track to Local Off, or use the equivalent routing option on the input instrument.
+    </p>
+
+    <h2>A Note Remains Stuck</h2>
+    <p>
+        Use Channel Soft Reset for the affected output channel. Use GM2 Reset only when a full device reset is appropriate.
+    </p>
+
+    <h2>The Selected Program Is Not the Expected Sound</h2>
+    <ul>
+        <li>Confirm that the correct Instrument Definition is selected.</li>
+        <li>In Manual mode, verify Bank MSB, Bank LSB and Program.</li>
+        <li>Remember that the General MIDI name in the Program list is only a reference when non-GM banks are selected.</li>
+    </ul>
+
+    <h2>The Monitor Keyboard Shows Gray Keys</h2>
+    <p>
+        Gray keys are outside the selected Keyboard Range. In the fixed 88-key view they remain visible for context but cannot be used as active-range keys.
+    </p>
+
+    <h1>12. MIDI Messages Generated and Forwarded</h1>
+
+    <h2>Incoming Channel Messages</h2>
+    <p>
+        The following table describes whether messages received on the selected input channel are forwarded to the assigned, enabled output tracks. In this table, “Ignore Preset CCs off” means that the <strong>Ignore Preset CCs</strong> option is not selected.
+    </p>
+
+    <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
+        <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="42%">Incoming MIDI message</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="58%">Forwarded to output tracks</th></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Note On</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Always</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Note Off</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Always</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Pitch Bend</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Always</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Polyphonic Key Pressure</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Always</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Channel Pressure</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Always</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Program Change and Bank Select (CC0, CC32)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Never</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">RPN</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Never</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">NRPN</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Never</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Sustain (CC64)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Always</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Expression (CC11)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Only when Ignore Preset CCs is off and Play Mode is Poly. Never in Mono mode.</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Volume (CC7)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Only when Ignore Preset CCs is off</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Pan (CC10)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Only when Ignore Preset CCs is off</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Reverb Send (CC91)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Only when Ignore Preset CCs is off</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Chorus Send (CC93)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Only when Ignore Preset CCs is off</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Harmonic Content (CC71)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Only when Ignore Preset CCs is off</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Brightness (CC74)</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Only when Ignore Preset CCs is off</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Any other Control Change message</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top">Always</td></tr>
+    </table>
+
+    <h2>Messages Generated by Morphora</h2>
+    <p>
+        Depending on the current configuration and user actions, Morphora can generate the following messages independently of incoming MIDI data:
+    </p>
+    <ul>
+        <li>Note On and Note Off</li>
+        <li>Bank Select MSB (CC0) and LSB (CC32)</li>
+        <li>Program Change</li>
+        <li>Volume (CC7)</li>
+        <li>Pan (CC10)</li>
+        <li>Expression (CC11, Mono morphing)</li>
+        <li>Sustain (CC64)</li>
+        <li>CC71 and CC74 timbral controls</li>
+        <li>Reverb Send (CC91)</li>
+        <li>Chorus Send (CC93)</li>
+        <li>All Notes Off (CC123)</li>
+        <li>Reset All Controllers (CC121)</li>
+        <li>Pitch Bend</li>
+        <li>Pitch Bend Sensitivity, RPN 0,0</li>
+        <li>Channel Fine Tuning, RPN 0,1</li>
+        <li>GM2 Reset SysEx</li>
+    </ul>
+
+    <h1>Version Information</h1>
+    <p>Morphora Version 1.0</p>
+    <p>© 2026 NaadaLab. All rights reserved.</p>
+
+</body>
+</html>
