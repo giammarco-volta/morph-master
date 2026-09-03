@@ -5,10 +5,11 @@ import QtQuick.Layouts
 import QtQuick.Controls.Material
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
 ApplicationWindow {
     id: root
-	color: Theme.background
+	color: SharedUi.Theme.background
     visible: true
     title: "Morphora"
 	font.family: "Arial"
