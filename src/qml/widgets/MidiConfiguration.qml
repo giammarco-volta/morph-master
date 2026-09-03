@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
 FormSection {
     id: root
@@ -99,7 +100,7 @@ FormSection {
         Layout.fillWidth: true
         spacing: 8
 
-        MidiChannelSelector {
+        SharedUi.MidiChannelSelector {
             id: inputChannelSelector
 
             title: "Input Channel"
