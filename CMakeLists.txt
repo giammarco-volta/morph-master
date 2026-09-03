@@ -72,9 +72,7 @@ set(MORPHMASTER_SOURCES
 if(WIN32)
   list(APPEND MORPHMASTER_SOURCES
     ../Common/src/midi/MidiOut_WinMM.h
-    ../Common/src/midi/MidiOut_WinMM.cpp
     ../Common/src/midi/MidiIn_WinMM.h
-    ../Common/src/midi/MidiIn_WinMM.cpp
   )
 elseif(ANDROID)
   list(APPEND MORPHMASTER_SOURCES
