@@ -102,7 +102,7 @@ ApplicationWindow {
         anchors.fill: parent
     }
 
-    ModalPanel {
+    SharedUi.ModalPanel {
         id: modalPanel
     }
 

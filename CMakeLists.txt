@@ -117,7 +117,6 @@ qt_add_qml_module(MorphMaster
 
     src/qml/controls/base/LabeledComboBox.qml
     src/qml/controls/base/SearchableComboField.qml
-    src/qml/controls/base/ModalPanel.qml
     src/qml/controls/base/FormSection.qml
     src/qml/controls/base/ActionButton.qml
     src/qml/controls/base/DragValueField.qml
