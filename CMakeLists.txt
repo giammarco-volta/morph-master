@@ -122,7 +122,6 @@ qt_add_qml_module(MorphMaster
     src/qml/controls/base/ActionButton.qml
     src/qml/controls/base/DragValueField.qml
 
-    src/qml/controls/midi/MidiChannelSelector.qml
     src/qml/controls/midi/PitchBendRangeSelector.qml
     src/qml/controls/midi/MidiKnob.qml
 
