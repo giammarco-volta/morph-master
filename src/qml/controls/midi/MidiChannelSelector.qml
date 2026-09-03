@@ -3,8 +3,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
-LabeledControl {
+SharedUi.LabeledControl {
     id: root
 
     property int currentChannel: 1
