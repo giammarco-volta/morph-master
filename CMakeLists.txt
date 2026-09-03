@@ -69,24 +69,6 @@ set(MORPHMASTER_SOURCES
   src/midi/MidiEngine.cpp
 )
 
-if(WIN32)
-  list(APPEND MORPHMASTER_SOURCES
-    ../Common/src/midi/MidiOut_WinMM.h
-    ../Common/src/midi/MidiIn_WinMM.h
-  )
-elseif(ANDROID)
-  list(APPEND MORPHMASTER_SOURCES
-    ../Common/src/midi/MidiAndroidBridge.h
-    ../Common/src/midi/MidiIn_Android.h
-    ../Common/src/midi/MidiOut_Android.h
-  )
-else()
-  list(APPEND MORPHMASTER_SOURCES
-    ../Common/src/midi/MidiOut_Stub.h
-    ../Common/src/midi/MidiIn_Stub.h
-  )
-endif()
-
 if(ANDROID)
   set(QT_ANDROID_COMPILE_SDK_VERSION 34)
   set(QT_ANDROID_MIN_SDK_VERSION 23)
