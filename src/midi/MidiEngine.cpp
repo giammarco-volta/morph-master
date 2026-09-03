@@ -1,10 +1,10 @@
 #include "MidiEngine.h"
 
-#include "../../../Common/src/midi/IMidiOut.h"
-#include "../../../Common/src/midi/MidiInFactory.h"
-#include "../../../Common/src/midi/MidiOutFactory.h"
-#include "../../../Common/src/midi/MidiMessage.h"
-#include "../../../Common/src/midi/MidiMonoIn.h"
+#include "IMidiOut.h"
+#include "MidiInFactory.h"
+#include "MidiOutFactory.h"
+#include "MidiMessage.h"
+#include "MidiMonoIn.h"
 
 #include "../core/ExpressionCalculator.h"
 
