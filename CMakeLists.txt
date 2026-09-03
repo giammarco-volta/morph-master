@@ -60,10 +60,8 @@ set(MORPHMASTER_SOURCES
 
   ../Common/src/midi/IMidiOut.h
   ../Common/src/midi/MidiOutFactory.h
-  ../Common/src/midi/MidiOutFactory.cpp
   ../Common/src/midi/IMidiIn.h
   ../Common/src/midi/MidiInFactory.h
-  ../Common/src/midi/MidiInFactory.cpp
 
   ../Common/src/midi/MidiMonoIn.h
   src/midi/MidiMonoIn.cpp
