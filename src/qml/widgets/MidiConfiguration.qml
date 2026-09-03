@@ -105,6 +105,14 @@ FormSection {
             title: "Input Channel"
             currentChannel: 1
 
+            onOpenPanelRequested: function(panelComponent, properties) {
+                ApplicationWindow.window.openModalPanel(panelComponent, properties)
+            }
+
+            onClosePanelRequested: {
+                ApplicationWindow.window.closeModalPanel()
+            }
+
             Layout.fillWidth: true
             Layout.preferredWidth: 2
 

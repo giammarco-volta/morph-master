@@ -9,6 +9,8 @@ SharedUi.LabeledControl {
     id: root
 
     property int currentChannel: 1
+    signal openPanelRequested(var panelComponent, var properties)
+    signal closePanelRequested()
 
     Component {
         id: channelPanel
@@ -64,7 +66,7 @@ SharedUi.LabeledControl {
                             panel.currentChannel = index + 1
                             if (panel.commit)
                                 panel.commit(panel.currentChannel)
-                            closeModalPanel()
+                            root.closePanelRequested()
                         }
                     }
                 }
@@ -80,7 +82,7 @@ SharedUi.LabeledControl {
         text: "Channel " + root.currentChannel
         opensPopup: true
 
-        onClicked: openModalPanel(channelPanel, {
+        onClicked: root.openPanelRequested(channelPanel, {
             currentChannel: root.currentChannel,
             commit: function(ch) { root.currentChannel = ch }
         })
