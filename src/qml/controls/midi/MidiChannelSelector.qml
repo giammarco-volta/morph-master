@@ -52,7 +52,7 @@ SharedUi.LabeledControl {
                 Repeater {
                     model: 16
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         text: String(index + 1)
 
                         Layout.preferredWidth: 64
@@ -72,7 +72,7 @@ SharedUi.LabeledControl {
         }
     }
 
-    ActionButton {
+    SharedUi.ActionButton {
         Layout.fillWidth: true
         Layout.preferredHeight: Theme.controlHeight
         implicitHeight: Theme.controlHeight
