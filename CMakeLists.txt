@@ -56,14 +56,6 @@ set(MORPHMASTER_SOURCES
   src/controllers/MorphOutputStateModel.h
   src/controllers/MorphOutputStateModel.cpp
 
-  ../Common/src/midi/MidiMessage.h
-
-  ../Common/src/midi/IMidiOut.h
-  ../Common/src/midi/MidiOutFactory.h
-  ../Common/src/midi/IMidiIn.h
-  ../Common/src/midi/MidiInFactory.h
-
-  ../Common/src/midi/MidiMonoIn.h
   src/midi/MidiMonoIn.cpp
   src/midi/MidiEngine.h
   src/midi/MidiEngine.cpp
