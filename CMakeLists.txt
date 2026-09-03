@@ -77,11 +77,8 @@ if(WIN32)
 elseif(ANDROID)
   list(APPEND MORPHMASTER_SOURCES
     ../Common/src/midi/MidiAndroidBridge.h
-    ../Common/src/midi/MidiAndroidBridge.cpp
     ../Common/src/midi/MidiIn_Android.h
-    ../Common/src/midi/MidiIn_Android.cpp
     ../Common/src/midi/MidiOut_Android.h
-    ../Common/src/midi/MidiOut_Android.cpp
   )
 else()
   list(APPEND MORPHMASTER_SOURCES
