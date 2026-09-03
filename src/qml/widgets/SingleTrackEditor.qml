@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
 ColumnLayout {
     id: root
@@ -574,7 +575,7 @@ ColumnLayout {
             }
         }
 
-        LabeledControl {
+        SharedUi.LabeledControl {
             id: instrumentProgramSelector
 
             visible: SettingsController.useInstrumentDefinition

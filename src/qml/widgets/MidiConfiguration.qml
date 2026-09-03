@@ -78,7 +78,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             text: "Refresh"
 
             Layout.fillWidth: true
@@ -128,7 +128,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             id: filterPresetCcButton
 
             text: "Ignore preset CCs"
@@ -182,7 +182,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             text: "Refresh"
 
             Layout.fillWidth: true
@@ -200,7 +200,7 @@ FormSection {
         Layout.fillWidth: true
         spacing: 8
 
-        ActionButton {
+        SharedUi.ActionButton {
             text: "Channel Soft Reset"
             opensPopup: true
 
@@ -220,7 +220,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             text: "GM2 Reset"
 
             Layout.fillWidth: true
@@ -269,7 +269,7 @@ FormSection {
                 Repeater {
                     model: 16
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         required property int index
 
                         text: String(index + 1)

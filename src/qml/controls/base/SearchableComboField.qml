@@ -3,8 +3,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
-LabeledControl {
+SharedUi.LabeledControl {
     id: root
 
     property string currentText: ""
@@ -12,7 +13,7 @@ LabeledControl {
 
     signal clicked()
 
-    ActionButton {
+    SharedUi.ActionButton {
         Layout.fillWidth: true
         Layout.preferredHeight: Theme.controlHeight
         implicitHeight: Theme.controlHeight

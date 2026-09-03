@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
 FormSection {
     id: root
@@ -78,7 +79,7 @@ FormSection {
                 Repeater {
                     model: 25
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         text: String(index)
 
                         Layout.preferredWidth: 56
@@ -145,7 +146,7 @@ FormSection {
             elide: Text.ElideRight
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             anchors.left: parent.left
             anchors.top: titleLabel.bottom
             anchors.topMargin: 4
@@ -161,7 +162,7 @@ FormSection {
             onClicked: pair.activated(0)
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             anchors.right: parent.right
             anchors.top: titleLabel.bottom
             anchors.topMargin: 4
@@ -310,7 +311,7 @@ FormSection {
                 - rightInset)
         }
 
-        LabeledControl {
+        SharedUi.LabeledControl {
             id: pitchBendRangeSelector
 
             x: playRow.controlX(0)
@@ -319,7 +320,7 @@ FormSection {
 
             title: "Pitch Bend Range"
 
-            ActionButton {
+            SharedUi.ActionButton {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Theme.controlHeight
                 implicitHeight: Theme.controlHeight

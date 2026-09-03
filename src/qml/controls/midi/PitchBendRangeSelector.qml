@@ -3,8 +3,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
-LabeledControl {
+SharedUi.LabeledControl {
     id: root
 
     property int currentRange: 2
@@ -51,7 +52,7 @@ LabeledControl {
                 Repeater {
                     model: 25
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         text: String(index)
 
                         Layout.preferredWidth: 56
@@ -71,7 +72,7 @@ LabeledControl {
         }
     }
 
-    ActionButton {
+    SharedUi.ActionButton {
         Layout.fillWidth: true
         Layout.preferredHeight: Theme.controlHeight
         implicitHeight: Theme.controlHeight

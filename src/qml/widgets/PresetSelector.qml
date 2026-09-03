@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
 FormSection {
     id: root
@@ -73,7 +74,7 @@ FormSection {
                         Layout.fillWidth: true
                     }
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         text: "Cancel"
                         Layout.preferredWidth: 92
 
@@ -82,7 +83,7 @@ FormSection {
                         }
                     }
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         text: "Save"
                         Layout.preferredWidth: 92
 
@@ -237,7 +238,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             x: presetRow.controlX(6)
             y: 0
 
@@ -262,7 +263,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             x: presetRow.controlX(6)
             y: presetRow.height - presetRow.lowerButtonHeight
 
@@ -277,7 +278,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             x: presetRow.controlX(8)
             y: presetRow.height - presetRow.lowerButtonHeight
 
@@ -297,7 +298,7 @@ FormSection {
             }
         }
 
-        ActionButton {
+        SharedUi.ActionButton {
             x: presetRow.controlX(10)
             y: presetRow.height - presetRow.lowerButtonHeight
 
@@ -371,7 +372,7 @@ FormSection {
                         Layout.fillWidth: true
                     }
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         text: "Cancel"
                         Layout.preferredWidth: 92
 
@@ -380,7 +381,7 @@ FormSection {
                         }
                     }
 
-                    ActionButton {
+                    SharedUi.ActionButton {
                         text: "Save"
                         Layout.preferredWidth: 92
 
