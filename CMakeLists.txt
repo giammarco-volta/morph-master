@@ -232,6 +232,7 @@ if(WIN32)
 endif()
 
 target_link_libraries(MorphMaster PRIVATE
+  NaadaLab::Midi
   Qt6::Concurrent
   Qt6::Widgets
   Qt6::Svg
