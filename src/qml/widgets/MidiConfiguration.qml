@@ -51,7 +51,7 @@ FormSection {
         Layout.fillWidth: true
         spacing: 8
 
-        LabeledComboBox {
+        SharedUi.LabeledComboBox {
             id: inputCombo
 
             title: "MIDI Input"
@@ -159,7 +159,7 @@ FormSection {
         Layout.fillWidth: true
         spacing: 8
 
-        LabeledComboBox {
+        SharedUi.LabeledComboBox {
             id: outputCombo
 
             title: "MIDI Output"

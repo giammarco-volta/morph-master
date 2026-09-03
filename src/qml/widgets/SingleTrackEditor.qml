@@ -377,7 +377,7 @@ ColumnLayout {
                         - rightInset)
         }
 
-        LabeledComboBox {
+        SharedUi.LabeledComboBox {
             id: morphOutputCombo
 
             x: morphRow.controlX(0)
@@ -613,7 +613,7 @@ ColumnLayout {
             }
         }
 
-        LabeledComboBox {
+        SharedUi.LabeledComboBox {
             id: manualProgramCombo
 
             visible: !SettingsController.useInstrumentDefinition
@@ -642,7 +642,7 @@ ColumnLayout {
             }
         }
 
-        LabeledComboBox {
+        SharedUi.LabeledComboBox {
             id: footageCombo
 
             x: patchRow.controlX(10)

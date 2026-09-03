@@ -368,7 +368,7 @@ FormSection {
             }
         }
 
-        LabeledComboBox {
+        SharedUi.LabeledComboBox {
             id: keyboardRangeCombo
 
             x: playRow.controlX(3)
