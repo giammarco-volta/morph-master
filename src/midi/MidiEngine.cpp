@@ -154,7 +154,22 @@ void MidiEngine::start()
 //----------------------
 {
   midiOut_ = createMidiOut();
-  midiIn_ = createMidiIn();
+
+  MidiIn_MonoInterpreter::Configuration midiInConfiguration;
+  midiInConfiguration.ignoreProgramChanges = true;
+
+  midiInConfiguration.ignoredControlChanges.set(0);
+  midiInConfiguration.ignoredControlChanges.set(6);
+  midiInConfiguration.ignoredControlChanges.set(32);
+  midiInConfiguration.ignoredControlChanges.set(38);
+  midiInConfiguration.ignoredControlChanges.set(96);
+  midiInConfiguration.ignoredControlChanges.set(97);
+  midiInConfiguration.ignoredControlChanges.set(98);
+  midiInConfiguration.ignoredControlChanges.set(99);
+  midiInConfiguration.ignoredControlChanges.set(100);
+  midiInConfiguration.ignoredControlChanges.set(101);
+
+  midiIn_ = createMidiIn(midiInConfiguration);
 
   if (midiIn_)
   {

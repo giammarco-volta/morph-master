@@ -60,7 +60,6 @@ set(MORPHMASTER_SOURCES
   src/controllers/MorphOutputStateModel.h
   src/controllers/MorphOutputStateModel.cpp
 
-  src/midi/MidiMonoIn.cpp
   src/midi/MidiEngine.h
   src/midi/MidiEngine.cpp
 )
