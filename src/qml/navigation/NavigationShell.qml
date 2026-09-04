@@ -382,7 +382,7 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        Rectangle {
+        SharedUi.NavigationRail {
             id: navigationRail
 
             Layout.preferredWidth: root.railWidth
@@ -390,279 +390,25 @@ Item {
             Layout.maximumWidth: root.railWidth
             Layout.fillHeight: true
 
-            color: Qt.darker(Theme.background, 1.15)
+            sections: root.sections
+            currentSection: root.currentSection
+            buttonHeight: root.sectionButtonHeight
+            iconScale: root.sectionIconScale
+            settingsIconSource: "qrc:/svg/gear.svg"
 
-            Rectangle {
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-
-                width: 1
-                color: "#505050"
+            onSectionActivated: function(section) {
+                root.currentSection = section
             }
 
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: 0
+            onSectionPressAndHold: function(section) {
+                if (!DebugBuild || section !== "about")
+                    return
 
-                Repeater {
-                    model: root.sections
-
-                    delegate: ToolButton {
-                        id: sectionButton
-
-                        required property int index
-                        required property var modelData
-
-                        readonly property bool selected:
-                            root.currentSection
-                            === sectionButton.modelData.section
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight:
-                            root.sectionButtonHeight
-                            * sectionButton.modelData.heightUnits
-                        Layout.minimumHeight:
-                            root.sectionButtonHeight
-                            * sectionButton.modelData.heightUnits
-                        Layout.maximumHeight:
-                            root.sectionButtonHeight
-                            * sectionButton.modelData.heightUnits
-
-                        hoverEnabled: true
-
-                        onPressed: {
-                            root.currentSection =
-                                sectionButton.modelData.section
-                        }
-
-                        onPressAndHold: {
-                            if (!DebugBuild
-                                    || sectionButton.modelData.section !== "about")
-                                return
-
-                            const appWindow = ApplicationWindow.window
-                            if (appWindow
-                                    && appWindow.viewportSimulationEnabled
-                                    && appWindow.cycleViewportProfile) {
-                                appWindow.cycleViewportProfile()
-                            }
-                        }
-
-                        ToolTip.visible: hovered
-                        ToolTip.text: modelData.name
-                        ToolTip.delay: 400
-
-                        background: Rectangle {
-                            color: sectionButton.selected
-                                   ? "#3A3A3A"
-                                   : "transparent"
-
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-
-                                width: 3
-                                color: sectionButton.selected
-                                       ? "#D8B85A"
-                                       : "transparent"
-                            }
-                        }
-
-                        contentItem: Item {
-                            id: iconHost
-
-                            readonly property color iconColor:
-                                sectionButton.selected
-                                    ? "#D8B85A"
-                                    : "#E0E0E0"
-
-                            readonly property string iconKind:
-                                sectionButton.modelData.section
-
-                            SharedUi.TintedSvg {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.verticalCenterOffset:
-                                    iconHost.iconKind === "configuration"
-                                        ? parent.height / 4
-                                        : 0
-
-                                width: Math.round(25 * root.sectionIconScale)
-                                height: width
-
-                                visible:
-                                    iconHost.iconKind === "settings"
-                                    || iconHost.iconKind === "configuration"
-
-                                source: "qrc:/svg/gear.svg"
-                                tintColor: iconHost.iconColor
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-
-                                visible: iconHost.iconKind === "about"
-
-                                text: "?"
-                                color: iconHost.iconColor
-                                font.pixelSize: Math.round(
-                                                    23
-                                                    * root.sectionIconScale)
-                                font.bold: true
-                            }
-
-                            Canvas {
-                                id: iconCanvas
-
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.verticalCenterOffset:
-                                    iconHost.iconKind === "configuration"
-                                        ? -parent.height / 4
-                                        : 0
-
-                                width: 30
-                                height: 30
-                                scale: root.sectionIconScale
-
-                                visible:
-                                    iconHost.iconKind === "midi"
-                                    || iconHost.iconKind === "assignment"
-                                    || iconHost.iconKind === "monitor"
-                                    || iconHost.iconKind === "configuration"
-                                    || iconHost.iconKind === "tracks"
-                                    || iconHost.iconKind === "curves"
-                                    || iconHost.iconKind === "manual"
-
-                                property color iconColor: iconHost.iconColor
-                                property string iconKind: iconHost.iconKind
-
-                                onIconColorChanged: requestPaint()
-                                onIconKindChanged: requestPaint()
-
-                                onPaint: {
-                                    const ctx = getContext("2d")
-
-                                    ctx.clearRect(0, 0, width, height)
-                                    ctx.strokeStyle = iconColor
-                                    ctx.fillStyle = iconColor
-                                    ctx.lineWidth = 2
-                                    ctx.lineCap = "round"
-                                    ctx.lineJoin = "round"
-
-                                    if (iconKind === "midi"
-                                            || iconKind === "configuration") {
-                                        ctx.beginPath()
-                                        ctx.arc(15, 15, 11,
-                                                0, Math.PI * 2)
-                                        ctx.stroke()
-
-                                        const pins = [
-                                            [10, 11],
-                                            [15, 9],
-                                            [20, 11],
-                                            [11.5, 17],
-                                            [18.5, 17]
-                                        ]
-
-                                        for (let i = 0;
-                                             i < pins.length;
-                                             ++i) {
-                                            ctx.beginPath()
-                                            ctx.arc(pins[i][0],
-                                                    pins[i][1],
-                                                    1.5,
-                                                    0,
-                                                    Math.PI * 2)
-                                            ctx.fill()
-                                        }
-                                    } else if (iconKind === "assignment") {
-                                        const boxes = [
-                                            [5, 5], [17, 5],
-                                            [5, 17], [17, 17]
-                                        ]
-
-                                        for (let i = 0; i < boxes.length; ++i)
-                                            ctx.strokeRect(boxes[i][0], boxes[i][1], 8, 8)
-                                    } else if (iconKind === "monitor") {
-                                        ctx.beginPath()
-                                        ctx.moveTo(4, 22)
-                                        ctx.bezierCurveTo(9, 22,
-                                                          11, 9,
-                                                          17, 9)
-                                        ctx.bezierCurveTo(21, 9,
-                                                          23, 17,
-                                                          26, 17)
-                                        ctx.stroke()
-
-                                        ctx.beginPath()
-                                        ctx.arc(18, 11, 2.5,
-                                                0, Math.PI * 2)
-                                        ctx.fill()
-                                    } else if (iconKind === "tracks") {
-                                        const sliderX = [7, 15, 23]
-                                        const sliderY = [11, 20, 15]
-
-                                        for (let i = 0;
-                                             i < sliderX.length;
-                                             ++i) {
-                                            ctx.beginPath()
-                                            ctx.moveTo(sliderX[i], 5)
-                                            ctx.lineTo(sliderX[i], 25)
-                                            ctx.stroke()
-
-                                            ctx.fillRect(sliderX[i] - 2.5,
-                                                         sliderY[i] - 2,
-                                                         5,
-                                                         4)
-                                        }
-                                    } else if (iconKind === "curves") {
-                                        ctx.beginPath()
-                                        ctx.moveTo(5, 8)
-                                        ctx.bezierCurveTo(12, 8,
-                                                          17, 22,
-                                                          25, 22)
-                                        ctx.stroke()
-
-                                        ctx.beginPath()
-                                        ctx.moveTo(5, 22)
-                                        ctx.bezierCurveTo(12, 22,
-                                                          17, 8,
-                                                          25, 8)
-                                        ctx.stroke()
-                                    } else if (iconKind === "manual") {
-                                        ctx.beginPath()
-                                        ctx.moveTo(4, 7)
-                                        ctx.lineTo(13.5, 9)
-                                        ctx.lineTo(13.5, 24)
-                                        ctx.lineTo(4, 22)
-                                        ctx.closePath()
-                                        ctx.stroke()
-
-                                        ctx.beginPath()
-                                        ctx.moveTo(26, 7)
-                                        ctx.lineTo(16.5, 9)
-                                        ctx.lineTo(16.5, 24)
-                                        ctx.lineTo(26, 22)
-                                        ctx.closePath()
-                                        ctx.stroke()
-
-                                        ctx.beginPath()
-                                        ctx.moveTo(15, 9)
-                                        ctx.lineTo(15, 24)
-                                        ctx.stroke()
-                                    }
-                                }
-                            }
-
-                        }
-                    }
-                }
-
-                Item {
-                    Layout.fillHeight: true
+                const appWindow = ApplicationWindow.window
+                if (appWindow
+                        && appWindow.viewportSimulationEnabled
+                        && appWindow.cycleViewportProfile) {
+                    appWindow.cycleViewportProfile()
                 }
             }
         }
