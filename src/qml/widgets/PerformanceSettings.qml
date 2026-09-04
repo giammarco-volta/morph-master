@@ -182,7 +182,9 @@ SharedUi.FormSection {
     Component {
         id: instrumentSelectionPanel
 
-        SearchableSelectionPopup { }
+        SharedUi.SearchableSelectionPopup {
+            onCloseRequested: ApplicationWindow.window.closeModalPanel()
+        }
     }
 
     Item {

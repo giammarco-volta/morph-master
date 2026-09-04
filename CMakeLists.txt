@@ -117,7 +117,6 @@ qt_add_qml_module(MorphMaster
     src/qml/widgets/MorphCornerSurfaceGraph.qml
     src/qml/widgets/SingleTrackEditor.qml
     src/qml/widgets/InstrumentProgramBrowserPopup.qml
-    src/qml/widgets/SearchableSelectionPopup.qml
 )
 
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/qml/Main.qml")

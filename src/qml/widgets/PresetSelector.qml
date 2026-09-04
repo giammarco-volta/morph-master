@@ -23,7 +23,9 @@ SharedUi.FormSection {
     Component {
         id: presetSelectionPanel
 
-        SearchableSelectionPopup { }
+        SharedUi.SearchableSelectionPopup {
+             onCloseRequested: ApplicationWindow.window.closeModalPanel()
+        }
     }
 
     Component {
