@@ -18,8 +18,8 @@ find_package(Qt6 REQUIRED COMPONENTS
 qt_standard_project_setup()
 
 add_subdirectory(
-  "${CMAKE_CURRENT_SOURCE_DIR}/../Common"
-  "${CMAKE_CURRENT_BINARY_DIR}/Common"
+  "${CMAKE_CURRENT_SOURCE_DIR}/external/Common"
+  "${CMAKE_CURRENT_BINARY_DIR}/external/Common"
 )
 
 if(QT_KNOWN_POLICY_QTP0002)
