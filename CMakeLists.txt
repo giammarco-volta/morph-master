@@ -80,28 +80,14 @@ else()
   )
 endif()
 
-set_source_files_properties(
-  src/qml/Theme.qml
-  PROPERTIES
-  QT_QML_SINGLETON_TYPE TRUE
-)
-
-set_source_files_properties(
-  src/qml/UiMetrics.qml
-  PROPERTIES
-  QT_QML_SINGLETON_TYPE TRUE
-)
-
 qt_add_qml_module(MorphMaster
   URI MorphMaster
   VERSION 1.0
-  DEPENDENCIES
+  IMPORTS
     TARGET NaadaLabUi
   RESOURCE_PREFIX /qt/qml
   NO_RESOURCE_TARGET_PATH
   QML_FILES
-    src/qml/Theme.qml
-    src/qml/UiMetrics.qml
     src/qml/Main.qml
 
     src/qml/navigation/NavigationShell.qml
