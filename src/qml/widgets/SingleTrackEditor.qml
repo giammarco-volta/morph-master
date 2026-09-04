@@ -415,7 +415,7 @@ ColumnLayout {
             }
         }
 
-        DragValueField {
+        SharedUi.DragValueField {
             id: detuneOffsetField
 
             x: morphRow.controlX(4)
@@ -440,7 +440,7 @@ ColumnLayout {
             }
         }
 
-        DragValueField {
+        SharedUi.DragValueField {
             id: detuneSpreadField
 
             x: morphRow.controlX(8)
@@ -515,7 +515,7 @@ ColumnLayout {
                         - rightInset)
         }
 
-        DragValueField {
+        SharedUi.DragValueField {
             id: bankMsbField
 
             visible: !SettingsController.useInstrumentDefinition
@@ -545,7 +545,7 @@ ColumnLayout {
             }
         }
 
-        DragValueField {
+        SharedUi.DragValueField {
             id: bankLsbField
 
             visible: !SettingsController.useInstrumentDefinition

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
 Rectangle {
     id: root
@@ -123,7 +124,7 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                DragValueField {
+                SharedUi.DragValueField {
                     id: x1Selector
 
                     title: ""
@@ -162,7 +163,7 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                DragValueField {
+                SharedUi.DragValueField {
                     id: y1Selector
 
                     title: ""
@@ -204,7 +205,7 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                DragValueField {
+                SharedUi.DragValueField {
                     id: x2Selector
 
                     title: ""
@@ -243,7 +244,7 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                DragValueField {
+                SharedUi.DragValueField {
                     id: y2Selector
 
                     title: ""

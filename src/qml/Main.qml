@@ -18,11 +18,7 @@ ApplicationWindow {
     Material.accent: Material.Amber
 
     readonly property int layoutClass:
-        contentItem.height <= SharedUi.UiMetrics.phoneMaxHeight
-            ? SharedUi.UiMetrics.Phone
-            : contentItem.height <= SharedUi.UiMetrics.tabletMaxHeight
-                ? SharedUi.UiMetrics.Tablet
-                : SharedUi.UiMetrics.Desktop
+        SharedUi.UiMetrics.layoutClassForHeight(contentItem.height)
 
     readonly property string layoutClassName: SharedUi.UiMetrics.layoutClassName(layoutClass)
 
