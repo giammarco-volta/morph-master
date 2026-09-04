@@ -99,8 +99,6 @@ qt_add_qml_module(MorphMaster
     src/qml/pages/AboutPage.qml
     src/qml/pages/UserManualPage.qml
 
-    src/qml/controls/midi/PitchBendRangeSelector.qml
-
     src/qml/widgets/MidiConfiguration.qml
     src/qml/widgets/PerformanceSettings.qml
     src/qml/widgets/PresetSelector.qml
