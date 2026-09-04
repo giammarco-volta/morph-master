@@ -10,86 +10,30 @@ SharedUi.FormSection {
 
     title: "MIDI"
 
-
-    // Per ora sono placeholder.
-    // Più avanti diventeranno liste provenienti dal backend MIDI C++.
-    property var midiInputPorts: ["Input device"]
-    property var midiOutputPorts: ["Output device"]
-
     property bool updatingMidiFromModel: false
-
-    function indexOfText(model, text) {
-        for (let i = 0; i < model.length; ++i) {
-            if (model[i] === text)
-                return i
-        }
-
-        return -1
-    }
 
     function syncMidiFromModel() {
         root.updatingMidiFromModel = true
-
-        inputCombo.modelData = SettingsController.midiInputPorts
-        outputCombo.modelData = SettingsController.midiOutputPorts
-
-        inputCombo.currentIndex =
-            root.indexOfText(inputCombo.modelData,
-                             SettingsController.midiInPort)
-
-        outputCombo.currentIndex =
-            root.indexOfText(outputCombo.modelData,
-                             SettingsController.midiOutPort)
-
         inputChannelSelector.currentChannel =
             SettingsController.midiInChannel + 1
-
         root.updatingMidiFromModel = false
     }
 
-    RowLayout {
+    Component.onCompleted: root.syncMidiFromModel()
+
+    SharedUi.MidiPortSelector {
+        title: "MIDI Input"
+        ports: SettingsController.midiInputPorts
+        currentPort: SettingsController.midiInPort
+
         Layout.fillWidth: true
-        spacing: 8
 
-        SharedUi.LabeledComboBox {
-            id: inputCombo
-
-            title: "MIDI Input"
-            modelData: []
-
-            Layout.fillWidth: true
-            Layout.preferredWidth: 2
-
-            Component.onCompleted: {
-                root.syncMidiFromModel()
-            }
-
-            onCurrentIndexChanged: {
-                if (root.updatingMidiFromModel)
-                    return
-
-                if (currentIndex < 0 || currentIndex >= inputCombo.modelData.length)
-                    return
-
-                const portName = inputCombo.modelData[currentIndex]
-
-                if (SettingsController.midiInPort !== portName)
-                    SettingsController.midiInPort = portName
-            }
+        onPortSelected: function(portName) {
+            if (SettingsController.midiInPort !== portName)
+                SettingsController.midiInPort = portName
         }
 
-        SharedUi.ActionButton {
-            text: "Refresh"
-
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            Layout.preferredHeight: Theme.controlHeight
-            Layout.alignment: Qt.AlignBottom
-
-            onClicked: {
-                SettingsController.refreshMidiInPorts()
-            }
-        }
+        onRefreshRequested: SettingsController.refreshMidiInPorts()
     }
 
     /*
@@ -155,45 +99,19 @@ SharedUi.FormSection {
         }    
     }
 
-    RowLayout {
+    SharedUi.MidiPortSelector {
+        title: "MIDI Output"
+        ports: SettingsController.midiOutputPorts
+        currentPort: SettingsController.midiOutPort
+
         Layout.fillWidth: true
-        spacing: 8
 
-        SharedUi.LabeledComboBox {
-            id: outputCombo
-
-            title: "MIDI Output"
-            modelData: []
-
-            Layout.fillWidth: true
-            Layout.preferredWidth: 2
-
-            onCurrentIndexChanged: {
-                if (root.updatingMidiFromModel)
-                    return
-
-                if (currentIndex < 0 || currentIndex >= outputCombo.modelData.length)
-                    return
-
-                const portName = outputCombo.modelData[currentIndex]
-
-                if (SettingsController.midiOutPort !== portName)
-                    SettingsController.midiOutPort = portName
-            }
+        onPortSelected: function(portName) {
+            if (SettingsController.midiOutPort !== portName)
+                SettingsController.midiOutPort = portName
         }
 
-        SharedUi.ActionButton {
-            text: "Refresh"
-
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            Layout.preferredHeight: Theme.controlHeight
-            Layout.alignment: Qt.AlignBottom
-
-            onClicked: {
-                SettingsController.refreshMidiOutPorts()
-            }
-        }
+        onRefreshRequested: SettingsController.refreshMidiOutPorts()
     }
 
     RowLayout {
@@ -294,23 +212,7 @@ SharedUi.FormSection {
         target: SettingsController
         ignoreUnknownSignals: true
 
-        function onMidiInPortChanged() {
-            root.syncMidiFromModel()
-        }
-
-        function onMidiOutPortChanged() {
-            root.syncMidiFromModel()
-        }
-
         function onMidiInChannelChanged() {
-            root.syncMidiFromModel()
-        }
-
-        function onMidiInputPortsChanged() {
-            root.syncMidiFromModel()
-        }
-
-        function onMidiOutputPortsChanged() {
             root.syncMidiFromModel()
         }
     }
