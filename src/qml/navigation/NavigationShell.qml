@@ -1,157 +1,12 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
 
 import MorphMaster
+import NaadaLab.Ui as SharedUi
 
 Item {
     id: root
-
-    /*
-     * Renders an SVG as a pure single-color icon.  The SVG alpha channel
-     * is used as a mask, so the original fill/stroke color is irrelevant.
-     */
-    component TintedSvg: Item {
-        id: tintedSvg
-
-        property url source
-        property color tintColor: "white"
-
-        Rectangle {
-            id: tintSource
-
-            anchors.fill: parent
-            color: tintedSvg.tintColor
-            visible: false
-        }
-
-        Image {
-            id: svgMask
-
-            anchors.fill: parent
-            source: tintedSvg.source
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            visible: false
-        }
-
-        MultiEffect {
-            anchors.fill: parent
-            source: tintSource
-            maskEnabled: true
-            maskSource: svgMask
-        }
-    }
-
-
-    /*
-     * Gives immediate visual feedback when a potentially heavy page is
-     * selected.  The lightweight shell is shown first; the real content is
-     * revealed on the following frame and is instantiated asynchronously.
-     */
-    component ResponsivePageHost: Item {
-        id: pageHost
-
-        property bool selected: false
-        property bool keepLoaded: true
-        property string pageTitle: ""
-        property Component pageComponent
-        property int revealDelayMs: 24
-        property int activationDelayMs: 0
-        property bool asynchronousLoading: true
-
-        property bool loadedOnce: false
-        property bool revealContent: false
-        property bool activationRequested: false
-
-        onSelectedChanged: {
-            if (selected) {
-                revealContent = false
-
-                if (loadedOnce && keepLoaded) {
-                    activationRequested = true
-                } else if (activationDelayMs > 0) {
-                    activationRequested = false
-                    activationTimer.restart()
-                } else {
-                    activationRequested = true
-                }
-
-                revealTimer.restart()
-            } else {
-                activationTimer.stop()
-                revealTimer.stop()
-                revealContent = false
-
-                if (!keepLoaded)
-                    activationRequested = false
-            }
-        }
-
-        Timer {
-            id: activationTimer
-            interval: pageHost.activationDelayMs
-            repeat: false
-            onTriggered: pageHost.activationRequested = true
-        }
-
-        Timer {
-            id: revealTimer
-            interval: pageHost.revealDelayMs
-            repeat: false
-            onTriggered: pageHost.revealContent = true
-        }
-
-        Loader {
-            id: pageLoader
-
-            anchors.fill: parent
-            active: pageHost.activationRequested
-                    || (pageHost.keepLoaded && pageHost.loadedOnce)
-            asynchronous: pageHost.asynchronousLoading
-            sourceComponent: pageHost.pageComponent
-            visible: pageHost.selected
-                     && pageHost.revealContent
-                     && status === Loader.Ready
-
-            onLoaded: pageHost.loadedOnce = true
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            visible: pageHost.selected
-                     && (!pageHost.revealContent
-                         || pageLoader.status !== Loader.Ready)
-            color: Theme.background
-            z: 2
-
-            Text {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.margins: 16
-
-                text: pageHost.pageTitle
-                color: Theme.secondaryText
-                font.pixelSize: 15
-                font.bold: true
-            }
-
-            BusyIndicator {
-                anchors.centerIn: parent
-                visible: pageLoader.status === Loader.Loading
-                running: visible
-            }
-
-            Text {
-                anchors.centerIn: parent
-                visible: pageLoader.status === Loader.Error
-                text: qsTr("Unable to load this page")
-                color: Theme.text
-                font.pixelSize: 14
-            }
-        }
-    }
 
     Component.onCompleted: {
         console.log("[MorphMaster] NavigationShell loaded: assignment, 4-track grid, global morph curves")
@@ -626,7 +481,7 @@ Item {
                             readonly property string iconKind:
                                 sectionButton.modelData.section
 
-                            TintedSvg {
+                            SharedUi.TintedSvg {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.verticalCenterOffset:
@@ -910,7 +765,7 @@ Item {
                     }
                 }
 
-                ResponsivePageHost {
+                SharedUi.ResponsivePageHost {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
@@ -920,7 +775,7 @@ Item {
                     pageComponent: monitorComponent
                 }
 
-                ResponsivePageHost {
+                SharedUi.ResponsivePageHost {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
@@ -929,7 +784,7 @@ Item {
                     pageComponent: midiComponent
                 }
 
-                ResponsivePageHost {
+                SharedUi.ResponsivePageHost {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
@@ -938,7 +793,7 @@ Item {
                     pageComponent: settingsComponent
                 }
 
-                ResponsivePageHost {
+                SharedUi.ResponsivePageHost {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
@@ -962,7 +817,7 @@ Item {
                     }
                 }
 
-                ResponsivePageHost {
+                SharedUi.ResponsivePageHost {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
@@ -971,7 +826,7 @@ Item {
                     pageComponent: curvesComponent
                 }
 
-                ResponsivePageHost {
+                SharedUi.ResponsivePageHost {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
