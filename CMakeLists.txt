@@ -171,6 +171,7 @@ endif()
 target_link_libraries(MorphMaster PRIVATE
   NaadaLab::Midi
   NaadaLab::Ui
+  NaadaLab::Manual
   Qt6::Concurrent
   Qt6::Widgets
   Qt6::Svg

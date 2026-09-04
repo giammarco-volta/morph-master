@@ -4,14 +4,7 @@
 #include <QTimer>
 #include <QThread>
 #include <QMetaObject>
-#include <QFile>
-#include <QTextStream>
-#include <QRegularExpression>
 #include <QVariantList>
-#include <QVariantMap>
-#include <QImageReader>
-#include <QSvgRenderer>
-#include <QSizeF>
 
 #include <algorithm>
 #include <cmath>
@@ -24,6 +17,8 @@
 #include "../core/ExpressionCalculator.h"
 #include "../midi/MidiEngine.h"
 #include "../About.h"
+
+#include "ManualDocumentParser.h"
 
 
 namespace
@@ -168,180 +163,6 @@ namespace
     return kKeyboardRanges[0];
   }
 
-  QString manualImageSourceToQrc(QString src)
-  {
-    src = src.trimmed();
-
-    if (src.startsWith(QStringLiteral("qrc:/")) ||
-      src.startsWith(QStringLiteral(":/")) ||
-      src.startsWith(QStringLiteral("http://")) ||
-      src.startsWith(QStringLiteral("https://")))
-    {
-      return src;
-    }
-
-    if (src.startsWith(QStringLiteral("./")))
-      src.remove(0, 2);
-
-    if (src.startsWith(QStringLiteral("images/")))
-      return QStringLiteral("qrc:/manual/") + src;
-
-    return QStringLiteral("qrc:/manual/images/") + src;
-  }
-
-  bool isInlineManualImage(const QString& imageTag)
-  {
-    static const QRegularExpression inlineImageRe(
-      QStringLiteral(
-        "\\bclass\\s*=\\s*[\"'][^\"']*\\bmanual-inline-image\\b[^\"']*[\"']"),
-      QRegularExpression::CaseInsensitiveOption);
-
-    return inlineImageRe.match(imageTag).hasMatch();
-  }
-
-  QString decorateManualTextFragment(QString html)
-  {
-    html.remove(QRegularExpression(
-      QStringLiteral("<!DOCTYPE[^>]*>"),
-      QRegularExpression::CaseInsensitiveOption));
-
-    html.remove(QRegularExpression(
-      QStringLiteral("<head[\\s\\S]*?</head>"),
-      QRegularExpression::CaseInsensitiveOption));
-
-    html.remove(QRegularExpression(
-      QStringLiteral("</?html[^>]*>"),
-      QRegularExpression::CaseInsensitiveOption));
-
-    html.replace(QRegularExpression(
-      QStringLiteral("<body[^>]*>"),
-      QRegularExpression::CaseInsensitiveOption),
-      QString());
-
-    html.replace(QRegularExpression(
-      QStringLiteral("</body>"),
-      QRegularExpression::CaseInsensitiveOption),
-      QString());
-
-    return QStringLiteral(R"(
-                              <style>
-                                body, p, div, span, li, td {
-                                  color: #E8E8E8;
-                                  background-color: transparent;
-                                }
-
-                                h1, h2, h3 {
-                                  color: #D8B85A;
-                                }
-
-                                b, strong {
-                                  color: #FFFFFF;
-                                }
-
-                                i {
-                                  color: #B8B8B8;
-                                }
-
-                                a {
-                                  color: #D8B85A;
-                                  text-decoration: none;
-                                  font-weight: bold;
-                                }
-                              </style>
-                              <div style="color:#E8E8E8;">
-                              )")
-                              + html +
-                              QStringLiteral("</div>");
-  }
-
-  bool extractLeadingCaption(const QString& html, QString& captionHtml, qsizetype& consumedChars)
-  {
-    static const QRegularExpression captionRe(
-      QStringLiteral(
-        "^\\s*<p\\b[^>]*class\\s*=\\s*[\"'][^\"']*\\bcaption\\b[^\"']*[\"'][^>]*>"
-        "([\\s\\S]*?)"
-        "</p>"),
-      QRegularExpression::CaseInsensitiveOption);
-
-    const QRegularExpressionMatch match = captionRe.match(html);
-
-    if (!match.hasMatch())
-      return false;
-
-    captionHtml = match.captured(1).trimmed();
-    consumedChars = match.capturedEnd();
-
-    return true;
-  }
-
-  QString extractFirstImageSource(const QString& html)
-  {
-    static const QRegularExpression imgRe(
-      QStringLiteral(R"(<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>)"),
-      QRegularExpression::CaseInsensitiveOption);
-
-    const QRegularExpressionMatch match = imgRe.match(html);
-
-    if (!match.hasMatch())
-      return QString();
-
-    return match.captured(1).trimmed();
-  }
-
-  QString extractFigcaptionHtml(const QString& html)
-  {
-    static const QRegularExpression captionRe(
-      QStringLiteral(R"(<figcaption\b[^>]*>([\s\S]*?)</figcaption>)"),
-      QRegularExpression::CaseInsensitiveOption);
-
-    const QRegularExpressionMatch match = captionRe.match(html);
-
-    if (!match.hasMatch())
-      return QString();
-
-    return match.captured(1).trimmed();
-  }
-
-  QString qrcUrlToResourcePath(QString source)
-  {
-    source = source.trimmed();
-
-    if (source.startsWith(QStringLiteral("qrc:/")))
-      return QStringLiteral(":") + source.mid(4); // qrc:/manual/... -> :/manual/...
-
-    return source;
-  }
-
-  QSizeF manualImageNaturalSize(const QString& qrcSource)
-  {
-    const QString resourcePath = qrcUrlToResourcePath(qrcSource);
-
-    if (resourcePath.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive))
-    {
-      QSvgRenderer renderer(resourcePath);
-
-      if (renderer.isValid())
-      {
-        const QSize defaultSize = renderer.defaultSize();
-
-        if (!defaultSize.isEmpty())
-          return QSizeF(defaultSize);
-
-        const QRectF viewBox = renderer.viewBoxF();
-
-        if (!viewBox.isEmpty())
-          return viewBox.size();
-      }
-    }
-
-    QImageReader reader(resourcePath);
-    const QSize size = reader.size();
-
-    if (!size.isEmpty())
-      return QSizeF(size);
-
-    return QSizeF(600.0, 400.0);
-  }
 }
 
 //-----------------------------------------------------------------------
@@ -1848,103 +1669,7 @@ QString SettingsController::aboutHtml() const
 QVariantList SettingsController::userManualBlocks() const
 //-------------------------------------------------------
 {
-  QVariantList blocks;
-
-  QFile file(QStringLiteral(":/manual/MorphoraUserManual.html"));
-
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-  {
-    QVariantMap block;
-    block["type"] = QStringLiteral("text");
-    block["html"] =
-      QStringLiteral("<h1>User Manual</h1>"
-        "<p>Unable to load the user manual.</p>");
-
-    blocks << block;
-    return blocks;
-  }
-
-  const QString html = QString::fromUtf8(file.readAll());
-
-  static const QRegularExpression blockRe(
-    QStringLiteral(
-      R"((<figure\b[^>]*>[\s\S]*?</figure>)|(<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>))"),
-    QRegularExpression::CaseInsensitiveOption);
-
-  qsizetype pos = 0;
-  auto it = blockRe.globalMatch(html);
-
-  while (it.hasNext())
-  {
-    const QRegularExpressionMatch m = it.next();
-
-    // Le piccole immagini inline devono rimanere nel testo RichText.
-    if (isInlineManualImage(m.captured(0)))
-      continue;
-
-    const qsizetype start = m.capturedStart();
-    const qsizetype end = m.capturedEnd();
-
-    const QString textPart = html.mid(pos, start - pos).trimmed();
-
-    if (!textPart.isEmpty())
-    {
-      QVariantMap textBlock;
-      textBlock["type"] = QStringLiteral("text");
-      textBlock["html"] = decorateManualTextFragment(textPart);
-      blocks << textBlock;
-    }
-
-    const QString figureHtml = m.captured(1);
-
-    QString imageSource;
-    QString captionHtml;
-
-    if (!figureHtml.isEmpty())
-    {
-      imageSource = extractFirstImageSource(figureHtml);
-      captionHtml = extractFigcaptionHtml(figureHtml);
-    }
-    else
-    {
-      imageSource = m.captured(3).trimmed();
-    }
-
-    if (!imageSource.isEmpty())
-    {
-      QVariantMap imageBlock;
-      const QString qrcSource = manualImageSourceToQrc(imageSource);
-      const QSizeF naturalSize = manualImageNaturalSize(qrcSource);
-
-      imageBlock["type"] = QStringLiteral("image");
-      imageBlock["source"] = qrcSource;
-      imageBlock["naturalWidth"] = naturalSize.width();
-      imageBlock["naturalHeight"] = naturalSize.height();
-
-      if (!captionHtml.isEmpty())
-      {
-        imageBlock["captionHtml"] =
-          QStringLiteral(
-            "<div style=\"color:#B8B8B8; font-style:italic; font-size:13px;\">")
-          + captionHtml
-          + QStringLiteral("</div>");
-      }
-
-      blocks << imageBlock;
-    }
-
-    pos = end;
-  }
-
-  const QString finalText = html.mid(pos).trimmed();
-
-  if (!finalText.isEmpty())
-  {
-    QVariantMap textBlock;
-    textBlock["type"] = QStringLiteral("text");
-    textBlock["html"] = decorateManualTextFragment(finalText);
-    blocks << textBlock;
-  }
-
-  return blocks;
+  return NaadaLab::ManualDocumentParser::loadFromResource(
+    QStringLiteral(":/manual/MorphoraUserManual.html"),
+    QStringLiteral("qrc:/manual/"));
 }
