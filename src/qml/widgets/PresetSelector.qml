@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import MorphMaster
 import NaadaLab.Ui as SharedUi
 
-FormSection {
+SharedUi.FormSection {
     id: root
 
     title: "Presets"
