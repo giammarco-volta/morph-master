@@ -240,7 +240,7 @@ FormSection {
             }
         }
 
-        SearchableComboField {
+        SharedUi.SearchableComboField {
             id: instrumentCombo
 
             x: programRow.controlX(8)

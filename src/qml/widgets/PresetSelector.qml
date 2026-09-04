@@ -202,7 +202,7 @@ FormSection {
                 - rightInset)
         }
 
-        SearchableComboField {
+        SharedUi.SearchableComboField {
             id: presetCombo
 
             x: presetRow.controlX(0)

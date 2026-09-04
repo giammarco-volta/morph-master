@@ -113,7 +113,6 @@ qt_add_qml_module(MorphMaster
     src/qml/pages/AboutPage.qml
     src/qml/pages/UserManualPage.qml
 
-    src/qml/controls/base/SearchableComboField.qml
     src/qml/controls/base/FormSection.qml
     src/qml/controls/base/DragValueField.qml
 
