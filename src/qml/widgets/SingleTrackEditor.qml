@@ -711,7 +711,7 @@ ColumnLayout {
                         - rightInset)
         }
 
-        MidiKnob {
+        SharedUi.MidiKnob {
             id: volumeKnob
 
             x: mixerRow.controlX(0)
@@ -735,7 +735,7 @@ ColumnLayout {
             }
         }
 
-        MidiKnob {
+        SharedUi.MidiKnob {
             id: panKnob
 
             x: mixerRow.controlX(2)
@@ -759,7 +759,7 @@ ColumnLayout {
             }
         }
 
-        MidiKnob {
+        SharedUi.MidiKnob {
             id: reverbKnob
 
             x: mixerRow.controlX(4)
@@ -783,7 +783,7 @@ ColumnLayout {
             }
         }
 
-        MidiKnob {
+        SharedUi.MidiKnob {
             id: chorusKnob
 
             x: mixerRow.controlX(6)
@@ -807,7 +807,7 @@ ColumnLayout {
             }
         }
 
-        MidiKnob {
+        SharedUi.MidiKnob {
             id: toneKnob
 
             x: mixerRow.controlX(8)
@@ -831,7 +831,7 @@ ColumnLayout {
             }
         }
 
-        MidiKnob {
+        SharedUi.MidiKnob {
             id: timbreKnob
 
             x: mixerRow.controlX(10)
