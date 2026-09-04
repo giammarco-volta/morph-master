@@ -136,11 +136,6 @@ set_source_files_properties(
   PROPERTIES QT_RESOURCE_ALIAS "manual/MorphoraUserManual.html"
 )
 
-set_source_files_properties(
-  src/resources/svg/gear.svg
-  PROPERTIES QT_RESOURCE_ALIAS "svg/gear.svg"
-)
-
 file(GLOB MANUAL_IMAGE_FILES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/resources/manual/images/*.png"
   "${CMAKE_CURRENT_SOURCE_DIR}/src/resources/manual/images/*.jpg"
@@ -165,7 +160,6 @@ qt_add_resources(MorphMaster MorphMasterDataResources
     src/resources/Ins/instrument_database.json
     src/resources/manual/MorphoraUserManual.html
     ${MANUAL_IMAGE_FILES}
-    src/resources/svg/gear.svg
 )
 
 if(WIN32)

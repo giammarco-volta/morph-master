@@ -394,7 +394,6 @@ Item {
             currentSection: root.currentSection
             buttonHeight: root.sectionButtonHeight
             iconScale: root.sectionIconScale
-            settingsIconSource: "qrc:/svg/gear.svg"
 
             onSectionActivated: function(section) {
                 root.currentSection = section
