@@ -27,7 +27,7 @@ Item {
         if (page.activeCurveEditGestures > 0)
             return
 
-        surfaceRefreshTimer.restart()
+        if (!surfaceRefreshTimer.running) surfaceRefreshTimer.start()
     }
 
     function beginCurveEditGesture() {
@@ -51,7 +51,7 @@ Item {
 
     Timer {
         id: surfaceRefreshTimer
-        interval: 0
+        interval: 100
         repeat: false
 
         onTriggered: page.surfaceRevision += 1
@@ -91,6 +91,7 @@ Item {
         primaryMorphOutputId: curveIndex === 0 ? 6 : 4
         complementaryMorphOutputId: curveIndex === 0 ? 2 : 0
 
+        ccCurveIndex: curveIndex
         property bool syncingFromController: false
 
         function syncFromController() {
@@ -133,17 +134,7 @@ Item {
 
             page.curveActivated(row.curveIndex)
 
-            if (row.curve.x1 !== row.x1)
-                row.curve.x1 = row.x1
-
-            if (row.curve.y1 !== row.y1)
-                row.curve.y1 = row.y1
-
-            if (row.curve.x2 !== row.x2)
-                row.curve.x2 = row.x2
-
-            if (row.curve.y2 !== row.y2)
-                row.curve.y2 = row.y2
+            row.curve.setPoints(row.x1,row.y1,row.x2,row.y2)
 
             page.requestSurfaceRefresh()
         }
@@ -156,6 +147,8 @@ Item {
                 row.syncFromController()
                 page.requestSurfaceRefresh()
             }
+
+            function onEffectiveCurveChanged() { page.requestSurfaceRefresh() }
 
             function onX1Changed() {
                 row.syncFromController()

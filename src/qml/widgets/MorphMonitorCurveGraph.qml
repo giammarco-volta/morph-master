@@ -36,7 +36,7 @@ Item {
 
     function morphOutputColor(outputId) {
         if (!root.feedbackEnabled)
-            return Qt.rgba(0.18, 0.18, 0.18, 1.0)
+            return Qt.rgba(1, 1, 1, 0.27)
 
         switch (outputId) {
         case 0: return Qt.rgba(0.45, 0.90, 0.48, 1.0) // Loud
@@ -51,14 +51,14 @@ Item {
         if (!root.curve)
             return 0.0
 
-        if (value <= root.curve.x1)
+        if (value <= root.curve.effectiveX1)
             return root.clamp(root.curve.y1 / 100.0, 0.0, 1.0)
 
-        if (value >= root.curve.x2)
+        if (value >= root.curve.effectiveX2)
             return root.clamp(root.curve.y2 / 100.0, 0.0, 1.0)
 
-        const span = Math.max(1, root.curve.x2 - root.curve.x1)
-        const t = (value - root.curve.x1) / span
+        const span = Math.max(1, root.curve.effectiveX2 - root.curve.effectiveX1)
+        const t = (value - root.curve.effectiveX1) / span
         return root.clamp((root.curve.y1
                            + (root.curve.y2 - root.curve.y1) * t) / 100.0,
                           0.0,
@@ -270,6 +270,9 @@ Item {
 
             for (let i = 0; i < root.feedbackNotes.length; ++i) {
                 const noteData = root.feedbackNotes[i]
+                if (noteData.outputMask !== undefined
+                    && !(Number(noteData.outputMask) & (1 << root.morphOutputId)))
+                    continue
                 const inputValue = root.noteMode
                                  ? Number(noteData.note)
                                  : Number(noteData.velocity)
@@ -279,7 +282,7 @@ Item {
 
                 ctx.beginPath()
                 ctx.arc(xFor(inputValue),
-                        yFor(root.gainAt(inputValue)),
+                        yFor(noteData.gains ? Number(noteData.gains[root.morphOutputId]) : root.gainAt(inputValue)),
                         radius,
                         0,
                         Math.PI * 2)
@@ -294,6 +297,7 @@ Item {
 
         function onRangeChanged() { root.requestGraphPaint() }
         function onX1Changed() { root.requestGraphPaint() }
+        function onEffectiveCurveChanged() { root.requestGraphPaint() }
         function onY1Changed() { root.requestGraphPaint() }
         function onX2Changed() { root.requestGraphPaint() }
         function onY2Changed() { root.requestGraphPaint() }
@@ -313,5 +317,5 @@ Item {
         if (root.feedbackEnabled)
             noteCanvas.requestPaint()
     }
-    onFeedbackEnabledChanged: noteCanvas.requestPaint()
+    onFeedbackEnabledChanged: root.requestGraphPaint()
 }

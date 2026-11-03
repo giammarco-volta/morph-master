@@ -194,6 +194,8 @@ Rectangle {
             }
         }
 
+
+
         TextField {
             id: outputNameEditor
             visible: root.hasTracks

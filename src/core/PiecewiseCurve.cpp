@@ -4,7 +4,7 @@
 
 
 //-----------------------------------------------------------
-float evaluateCurveWeight(const PiecewiseCurve& c, uint8_t x)
+float evaluateCurveWeight(const PiecewiseCurve& c, double x)
 //-----------------------------------------------------------
 {
   auto normalize = [](float y) { return std::clamp(y / 100.0f, 0.0f, 1.0f); };

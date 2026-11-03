@@ -128,9 +128,9 @@ namespace
   QJsonObject toJson(const PiecewiseCurve& c)
   {
     QJsonObject obj;
-    obj["x0"] = static_cast<int>(c.x0);
+    obj["x0"] = c.x0;
     obj["y0"] = static_cast<int>(c.y0);
-    obj["x1"] = static_cast<int>(c.x1);
+    obj["x1"] = c.x1;
     obj["y1"] = static_cast<int>(c.y1);
     return obj;
   }
@@ -138,9 +138,9 @@ namespace
   PiecewiseCurve piecewiseCurveFromJson(const QJsonObject& obj)
   {
     PiecewiseCurve c;
-    c.x0 = static_cast<uint8_t>(obj.value("x0").toInt(c.x0));
+    c.x0 = obj.value("x0").toDouble(c.x0);
     c.y0 = static_cast<uint8_t>(obj.value("y0").toInt(c.y0));
-    c.x1 = static_cast<uint8_t>(obj.value("x1").toInt(c.x1));
+    c.x1 = obj.value("x1").toDouble(c.x1);
     c.y1 = static_cast<uint8_t>(obj.value("y1").toInt(c.y1));
     return c;
   }
@@ -222,6 +222,11 @@ namespace
       morphOutputsArray.append(toJson(output));
     obj["morphOutputs"] = morphOutputsArray;
 
+    QJsonArray curveControls;
+    for (const auto& a : p.curveControls)
+      curveControls.append(QJsonObject{{"cc",a.cc},{"channel",a.channel},{"minimum",a.minimum},{"maximum",a.maximum}});
+    obj["curveControls"] = curveControls;
+
     obj["keycurve"] = toJson(p.keyCurve);
     obj["velcurve"] = toJson(p.velCurve);
 
@@ -231,6 +236,14 @@ namespace
   PresetData presetDataFromJson(const QJsonObject& obj)
   {
     PresetData p;
+    const auto controls=obj.value("curveControls").toArray();
+    for (int i=0; i<4 && i<controls.size(); ++i) {
+      const auto a=controls[i].toObject();
+      p.curveControls[i].cc=a.value("cc").toInt(-1);
+      p.curveControls[i].channel=a.value("channel").toInt(-1);
+      p.curveControls[i].minimum=a.value("minimum").toDouble(i%2 ? 1 : 0);
+      p.curveControls[i].maximum=a.value("maximum").toDouble(127);
+    }
     p.name = obj.value("name").toString().trimmed();
     p.notes = obj.value("notes").toString();
 
@@ -238,6 +251,8 @@ namespace
     {
       p.appInitSettings = appInitSettingsFromJson(obj.value("appInitSettings").toObject());
     }
+
+    sanitizeCurveCcAssignments(p.curveControls,p.appInitSettings.midiSetup.midiInChannel);
 
     {
       const QJsonArray arr = obj.value("tracks").toArray();

@@ -211,6 +211,9 @@ SettingsController::SettingsController(QObject* parent) : QObject(parent)
 
   velocityCurveController = new CurveController(*this, CurveSet::Velocity, this);
 
+  curveEditPublishTimer_.setSingleShot(true);
+  curveEditPublishTimer_.setInterval(16);
+  connect(&curveEditPublishTimer_, &QTimer::timeout, this, &SettingsController::publishPendingCurveEdits);
   startMidiEngine();
   syncMidiEngineSnapshot();
 }
@@ -282,6 +285,20 @@ void SettingsController::startMidiEngine()
                 Qt::QueuedConnection);
             }
           });
+
+  connect(midiEngine_, &MidiEngine::curveControlValueChanged, this,
+    [this](int slot, int delta, quint64 revision, quint64 serial) {
+      if (revision != curveControlRevision_ || slot<0 || slot>=4) return;
+      curveEditAcknowledged_=serial;
+      auto& curve=slot<2 ? currentPreset_.keyCurve : currentPreset_.velCurve;
+      auto* controller=slot<2 ? keyCurveController : velocityCurveController;
+      // Apply every delta in order, including clipping/reversals. Only publication
+      // to QML and acknowledgement snapshots are coalesced, never the MIDI edits.
+      setCurveParameter(curve,slot%2,curveParameter(curve,slot%2)+delta,
+                        controller->minX(),controller->maxX());
+      pendingCurveNotifications_[slot/2]=true;
+      if(!curveEditPublishTimer_.isActive()) curveEditPublishTimer_.start();
+    });
 
   connect(midiEngine_, &MidiEngine::midiInputReceivedWithNoAssignedTracks, this, &SettingsController::midiInputReceivedWithNoAssignedTracks);
 
@@ -355,6 +372,9 @@ MidiEngineSnapshot SettingsController::makeMidiEngineSnapshot() const
   s.surfaceMinNote = surfaceMinNote();
   s.surfaceMaxNote = surfaceMaxNote();
 
+  s.curveControls = currentPreset_.curveControls;
+  s.curveControlRevision = curveControlRevision_;
+  s.curveEditAcknowledged = curveEditAcknowledged_;
   s.tracks = currentPreset_.tracks;
   s.keyCurve = currentPreset_.keyCurve;
   s.velCurve = currentPreset_.velCurve;
@@ -471,6 +491,9 @@ void SettingsController::setMidiInChannel(int channel)
     return;
 
   midi.midiInChannel = static_cast<uint8_t>(newChannel);
+  sanitizeCurveCcAssignments(currentPreset_.curveControls,newChannel);
+  resetCurveControlValues();
+  emit curveControlsChanged();
 
   saveAppInitSettings();
   syncMidiEngineSnapshot();
@@ -679,6 +702,110 @@ void SettingsController::setPitchBendRange(int value)
 }
 
 //--------------------------------------
+QVariantList SettingsController::curveControls() const
+{
+  QVariantList result;
+  const QStringList names={"Low/High: position", "Low/High: slope", "Soft/Loud: position", "Soft/Loud: slope"};
+  for (int i=0; i<4; ++i) {
+    const auto& a=currentPreset_.curveControls[i];
+    result.append(QVariantMap{{"slot",i},{"name",names[i]},{"cc",a.cc},{"channel",a.channel},
+                              {"minimum",a.minimum},{"maximum",a.maximum}});
+  }
+  return result;
+}
+QVariantList SettingsController::curveControlValues() const
+{
+  QVariantList result;
+  for(int slot=0;slot<4;++slot)
+    result.append(curveParameter(slot<2 ? currentPreset_.keyCurve : currentPreset_.velCurve,slot%2));
+  return result;
+}
+QVariantList SettingsController::availableCurveControlCcs(int slot) const
+{
+  QVariantList result{QVariantMap{{"label","CC: None"},{"cc",-1}}};
+  if(slot<0 || slot>=4) return result;
+  const int channel=curveCcChannel(currentPreset_.curveControls[slot],midiInChannel());
+  for (int cc=0; cc<128; ++cc) {
+    if(!isAssignableCurveCc(cc,channel,midiInChannel())) continue;
+    bool used=false;
+    for(int i=0;i<4;++i)
+      if(i!=slot && currentPreset_.curveControls[i].cc==cc
+         && curveCcChannel(currentPreset_.curveControls[i],midiInChannel())==channel) used=true;
+    if(!used) result.append(QVariantMap{{"label",QString("CC %1").arg(cc)},{"cc",cc}});
+  }
+  return result;
+}
+void SettingsController::setCurveControl(int slot, int cc, double minimum, double maximum)
+{
+  if(slot<0 || slot>=4) return;
+  const int channel=curveCcChannel(currentPreset_.curveControls[slot],midiInChannel());
+  if(cc!=-1 && !isAssignableCurveCc(cc,channel,midiInChannel())) return;
+  for(int i=0;i<4;++i) if(i!=slot && cc>=0 && currentPreset_.curveControls[i].cc==cc
+      && curveCcChannel(currentPreset_.curveControls[i],midiInChannel())==channel) return;
+  auto next=currentPreset_.curveControls;
+  next[slot]={cc,minimum,maximum,next[slot].channel};
+  sanitizeCurveCcAssignments(next,midiInChannel());
+  const auto& old=currentPreset_.curveControls[slot];
+  const auto& changed=next[slot];
+  if(old.cc==changed.cc && old.minimum==changed.minimum && old.maximum==changed.maximum) return;
+  currentPreset_.curveControls=next;
+  resetCurveControlValues();
+  emit curveControlsChanged();
+}
+void SettingsController::setCurveControlChannel(int slot, int channel)
+{
+  if(slot<0 || slot>=4 || channel<-1 || channel>15) return;
+  auto& assignment=currentPreset_.curveControls[slot];
+  if(assignment.channel==channel) return;
+  const int resolved=channel<0 ? midiInChannel() : channel;
+  // Changing channel is always possible; an incompatible CC becomes unassigned.
+  bool clear=!isAssignableCurveCc(assignment.cc,resolved,midiInChannel());
+  for(int i=0;i<4;++i) if(i!=slot && currentPreset_.curveControls[i].cc==assignment.cc
+      && curveCcChannel(currentPreset_.curveControls[i],midiInChannel())==resolved) clear=true;
+  assignment.channel=channel;
+  if(clear) assignment.cc=-1;
+  resetCurveControlValues();
+  emit curveControlsChanged();
+}
+void SettingsController::publishPendingCurveEdits()
+{
+  curveEditPublishTimer_.stop();
+  const auto changed=pendingCurveNotifications_;
+  pendingCurveNotifications_.fill(false);
+  if(!changed[0] && !changed[1]) return;
+  if(changed[0]) keyCurveController->notifyHorizontalChanged();
+  if(changed[1]) velocityCurveController->notifyHorizontalChanged();
+  notifyMidiRelevantStateChanged();
+}
+void SettingsController::setCurveParameterValue(int slot, double value)
+{
+  if(slot<0 || slot>=4 || !std::isfinite(value)) return;
+  auto& curve=slot<2 ? currentPreset_.keyCurve : currentPreset_.velCurve;
+  auto* controller=slot<2 ? keyCurveController : velocityCurveController;
+  setCurveParameter(curve,slot%2,value,controller->minX(),controller->maxX());
+  controller->notifyHorizontalChanged();
+  notifyMidiRelevantStateChanged();
+}
+void SettingsController::previewCurveControlValue(int slot, int value)
+{
+  if (!midiEngine_ || slot<0 || slot>=4 || currentPreset_.curveControls[slot].cc<0) return;
+  const auto revision=curveControlRevision_;
+  QMetaObject::invokeMethod(midiEngine_, [engine=midiEngine_,slot,value,revision]() {
+    engine->previewCurveControlValue(slot,value,revision);
+  }, Qt::QueuedConnection);
+}
+void SettingsController::resetCurveControlValues()
+{
+  ++curveControlRevision_;
+  curveControlValues_.fill(-1);
+  syncMidiEngineSnapshot();
+  emit curveControlValuesChanged();
+}
+CurveTransform SettingsController::effectiveCurveTransform(int curveIndex) const
+{
+  return {};
+}
+
 int SettingsController::playMode() const
 //--------------------------------------
 {
@@ -1293,6 +1420,7 @@ void SettingsController::setMorphOutputSolo(int morphOutputIndex, bool solo)
 void SettingsController::notifyMidiRelevantStateChanged()
 //-------------------------------------------------------
 {
+  emit curveControlValuesChanged();
   syncMidiEngineSnapshot();
 }
 
@@ -1523,7 +1651,14 @@ void SettingsController::sendCurrentPresetSetupToMidiEngine()
 void SettingsController::applyPreset(const PresetData& preset)
 //------------------------------------------------------------
 {
+  curveEditPublishTimer_.stop();
+  pendingCurveNotifications_.fill(false);
   currentPreset_ = preset;
+  sanitizeCurveCcAssignments(currentPreset_.curveControls,midiInChannel());
+  ++curveControlRevision_;
+  curveControlValues_.fill(-1);
+  emit curveControlsChanged();
+  emit curveControlValuesChanged();
 
   saveAppInitSettings();
 

@@ -12,8 +12,8 @@ public:
   static double computeScaleFactor(const MorphOutputProfile& gp,
                                    const PiecewiseCurve& keyCurve,
                                    const PiecewiseCurve& velCurve,
-                                   uint8_t note,
-                                   uint8_t velocity);
+                                   double note,
+                                   double velocity);
 
   static uint8_t WeightTheValue(const MorphOutputProfile& gp,
                                 const PiecewiseCurve& keyCurve,

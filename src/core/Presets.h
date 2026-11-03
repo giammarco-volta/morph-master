@@ -11,6 +11,7 @@
 #include "Footage.h"
 #include "KeyboardStandardRanges.h"
 #include "PiecewiseCurve.h"
+#include "CurveControl.h"
 #include "InstrumentDefinition.h"
 
 
@@ -85,6 +86,7 @@ struct PresetData
   AppInitSettings appInitSettings;
   std::array<TrackPresetData, 16> tracks;
   std::array<MorphOutputPresetData, 8> morphOutputs;
+  CurveCcAssignments curveControls = defaultCurveCcAssignments();
   PiecewiseCurve keyCurve;
   PiecewiseCurve velCurve;
 };

@@ -103,6 +103,7 @@ SharedUi.FormSection {
         id: pair
 
         property string title: ""
+        property bool centerTitle: false
         property string firstText: ""
         property string secondText: ""
         property int currentIndex: 0
@@ -141,7 +142,7 @@ SharedUi.FormSection {
             font.pixelSize: Theme.labelFontSize
             font.bold: true
 
-            horizontalAlignment: Text.AlignLeft
+            horizontalAlignment: pair.centerTitle ? Text.AlignHCenter : Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
@@ -284,6 +285,8 @@ SharedUi.FormSection {
         }
     }
 
+
+
     Item {
         id: playRow
 
@@ -424,6 +427,7 @@ SharedUi.FormSection {
             height: keyboardRangeCombo.implicitHeight
 
             title: "Play Mode"
+            centerTitle: true
             firstText: "Poly"
             secondText: "Mono"
 

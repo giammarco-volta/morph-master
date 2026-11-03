@@ -196,3 +196,9 @@ if(ANDROID)
 endif()
 
 qt_finalize_executable(MorphMaster)
+
+option(MORPHORA_BUILD_TESTS "Build MIDI routing regression tests" OFF)
+if(MORPHORA_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()

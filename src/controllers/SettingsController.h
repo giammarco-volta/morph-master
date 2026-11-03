@@ -2,6 +2,7 @@
 
 #include <array>
 #include <QObject>
+#include <QTimer>
 #include <QStringList>
 #include <QFutureWatcher>
 #include <QString>
@@ -82,6 +83,10 @@ class SettingsController : public QObject
     READ pitchBendRange
     WRITE setPitchBendRange
     NOTIFY pitchBendRangeChanged)
+
+
+  Q_PROPERTY(QVariantList curveControls READ curveControls NOTIFY curveControlsChanged)
+  Q_PROPERTY(QVariantList curveControlValues READ curveControlValues NOTIFY curveControlValuesChanged)
 
   Q_PROPERTY(int playMode
     READ playMode
@@ -183,6 +188,17 @@ public:
   int pitchBendRange() const;
   void setPitchBendRange(int value);
 
+
+  QVariantList curveControls() const;
+  QVariantList curveControlValues() const;
+  Q_INVOKABLE QVariantList availableCurveControlCcs(int slot) const;
+  Q_INVOKABLE void setCurveControlChannel(int slot, int channel);
+  Q_INVOKABLE void setCurveControl(int slot, int cc, double minimum, double maximum);
+  Q_INVOKABLE void resetCurveControlValues();
+  Q_INVOKABLE void previewCurveControlValue(int slot, int value);
+  Q_INVOKABLE void setCurveParameterValue(int slot, double value);
+  CurveTransform effectiveCurveTransform(int curveIndex) const;
+
   int playMode() const;
   void setPlayMode(int value);
   bool loadInstrumentDatabase(const QString& filePath, QString* errorMessage = nullptr);
@@ -256,6 +272,7 @@ public:
   Q_INVOKABLE void activatePreset(int index);
 
 private:
+  void publishPendingCurveEdits();
   void loadAppInitSettings();
   void saveAppInitSettings() const;
   void refreshMidiPorts();
@@ -280,6 +297,8 @@ signals:
   void useInstrumentDefinitionChanged();
   void keyboardRangeIdChanged();
   void pitchBendRangeChanged();
+  void curveControlsChanged();
+  void curveControlValuesChanged();
   void playModeChanged();
   void instrumentNamesChanged();
   void knownInstrumentNameChanged();
@@ -304,6 +323,11 @@ private:
   QStringList midiOutputPorts_;
 
   PresetData currentPreset_;
+  std::array<int,4> curveControlValues_{{-1,-1,-1,-1}};
+  quint64 curveControlRevision_ = 0;
+  quint64 curveEditAcknowledged_ = 0;
+  QTimer curveEditPublishTimer_;
+  std::array<bool,2> pendingCurveNotifications_{};
 
   std::array<TrackController*, 16> tracks_{};
 

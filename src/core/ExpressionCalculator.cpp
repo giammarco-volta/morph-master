@@ -7,8 +7,8 @@
 double CurveCalculator::computeScaleFactor( const MorphOutputProfile& gp,
                                             const PiecewiseCurve& keyCurve,
                                             const PiecewiseCurve& velCurve,
-                                            uint8_t note,
-                                            uint8_t velocity)
+                                            double note,
+                                            double velocity)
 //------------------------------------------------------------------------------------------
 {
   static constexpr double kHalfPi = 1.5707963267948966;

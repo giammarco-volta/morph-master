@@ -42,14 +42,14 @@ Rectangle {
         if (!curve)
             return 0.0
 
-        if (value <= curve.x1)
+        if (value <= curve.effectiveX1)
             return clamp(curve.y1 / 100.0, 0.0, 1.0)
 
-        if (value >= curve.x2)
+        if (value >= curve.effectiveX2)
             return clamp(curve.y2 / 100.0, 0.0, 1.0)
 
-        const span = Math.max(1, curve.x2 - curve.x1)
-        const t = (value - curve.x1) / span
+        const span = Math.max(1, curve.effectiveX2 - curve.effectiveX1)
+        const t = (value - curve.effectiveX1) / span
         const weight = curve.y1 + (curve.y2 - curve.y1) * t
         return clamp(weight / 100.0, 0.0, 1.0)
     }
@@ -259,6 +259,18 @@ Rectangle {
         anchors.margins: 1
 
         onPaint: {
+            function coordinates(curve) {
+                return { effectiveX1: curve.effectiveX1, effectiveX2: curve.effectiveX2,
+                         y1: curve.y1, y2: curve.y2 }
+            }
+            const key = coordinates(root.keyCurve)
+            const velocity = coordinates(root.velocityCurve)
+            const profile = root.profileForOutput(root.morphOutputId)
+            function meshGain(note, vel) {
+                const k = root.equalPowerGain(root.curveWeightAt(key,note),profile.invertKey)
+                const v = root.equalPowerGain(root.curveWeightAt(velocity,vel),profile.invertVelocity)
+                return Math.sqrt(Math.max(0,k*v))
+            }
             const ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
             ctx.lineCap = "round"
@@ -333,10 +345,10 @@ Rectangle {
                 for (let xi = 0; xi < xResolution; ++xi) {
                     const x0 = xi / xResolution
                     const x1 = (xi + 1) / xResolution
-                    const z00 = root.gainAt(root.noteForNorm(x0), root.velocityForNorm(y0))
-                    const z10 = root.gainAt(root.noteForNorm(x1), root.velocityForNorm(y0))
-                    const z11 = root.gainAt(root.noteForNorm(x1), root.velocityForNorm(y1))
-                    const z01 = root.gainAt(root.noteForNorm(x0), root.velocityForNorm(y1))
+                    const z00 = meshGain(root.noteForNorm(x0), root.velocityForNorm(y0))
+                    const z10 = meshGain(root.noteForNorm(x1), root.velocityForNorm(y0))
+                    const z11 = meshGain(root.noteForNorm(x1), root.velocityForNorm(y1))
+                    const z01 = meshGain(root.noteForNorm(x0), root.velocityForNorm(y1))
 
                     cells.push({
                         p00: point(x0, y0, z00),
@@ -371,7 +383,7 @@ Rectangle {
                 for (let xi = 0; xi <= xResolution; ++xi) {
                     const xNorm = xi / xResolution
                     const p = point(xNorm, yNorm,
-                                    root.gainAt(root.noteForNorm(xNorm),
+                                    meshGain(root.noteForNorm(xNorm),
                                                 root.velocityForNorm(yNorm)))
                     if (xi === 0)
                         ctx.moveTo(p.x, p.y)
@@ -387,7 +399,7 @@ Rectangle {
                 for (let yi = 0; yi <= yResolution; ++yi) {
                     const yNorm = yi / yResolution
                     const p = point(xNorm, yNorm,
-                                    root.gainAt(root.noteForNorm(xNorm),
+                                    meshGain(root.noteForNorm(xNorm),
                                                 root.velocityForNorm(yNorm)))
                     if (yi === 0)
                         ctx.moveTo(p.x, p.y)

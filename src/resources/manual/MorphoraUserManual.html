@@ -142,6 +142,8 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
 
     <h2>Introduction</h2>
 
+    <p><strong>Recommended device:</strong> On Android, a tablet is recommended for setup and live performance, with more space for controls and monitoring. Phones are also supported for exploring the app and performing with setups that require less on-screen interaction.</p>
+
     <h3>The Idea Behind Morphora</h3>
     <p>
         Morphora grew out of a simple observation. Many workstations, synthesizers and sound modules can play several parts at the same time, but real-time keyboard performance often uses only one sound or a simple layer of two sounds. The multitimbral capacity of the instrument therefore remains largely unused unless it is driven by a sequencer.
@@ -964,7 +966,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
     </p>
 
     <p>
-        The curves themselves are not dynamically modified during performance.
+        Moving an assigned MIDI control during performance edits the same curve you see here.
         Each curve is defined by two control points. Outside the interval between
         those points the response is horizontal, while the transition between them
         follows an equal-power quarter-sine or quarter-cosine shape.
@@ -990,6 +992,13 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
     <p>
         The two handles belong to the primary curve. Move them directly on the graph, or edit x1, y1, x2 and y2 with the numeric drag fields.
     </p>
+
+    <h2>Editing curves with MIDI controls</h2>
+    <p>Each curve has two controls. <strong>Position</strong> moves both points left or right, preserving their distance. <strong>Slope</strong> moves them towards or away from their midpoint. A higher Slope gives a narrower crossfade. The points stay inside the keyboard or velocity range and at least one unit apart. Both controls leave the y values unchanged.</p>
+    <p>Under Position or Slope, choose a CC number and a MIDI channel. <strong>Input ch.</strong> follows the channel used for notes. Use the numeric field below the selectors to edit the parameter directly, even when its CC is set to None. Dragging a point also updates Position and Slope. Save the preset to keep the curve and its assignments.</p>
+    <p>For example, leave the note input on channel 1 and configure four keyboard sliders to transmit CC7 on MIDI OUT channels 3, 4, 5 and 6. Assign each channel to one of the four controls, as shown in the tablet illustration. Use separate keyboard tracks for these sliders and for the sounds driven by Morphora. A channel and CC combination can control only one parameter. All CC numbers are available on separate control channels. On the note input channel, Morphora reserves CCs it already uses, including Expression (CC11).</p>
+    <p>The first value from each slider establishes its starting position. If Slope is 87 and the first CC value is 1, Slope stays at 87. Moving the slider to 2 raises Slope to 88. At a limit, reversing direction takes effect immediately. Editing a point by hand preserves this reference. Loading a preset, changing assignments or reconnecting MIDI establishes a fresh reference on the next message.</p>
+    <p>In Poly, notes already held keep their original contributions and the next note uses the edited curve. In Mono, a held note follows the curve through Expression, without a new attack.</p>
 
     <h2>Corner Morph Surfaces</h2>
     <p>
@@ -1043,7 +1052,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
     <figure>
         <img src="images/TabletCurveEditor.png" alt="Tablet Curve Editor">
         <figcaption>
-            Curve definition in tablet and desktop profiles.
+            Tablet and desktop curve editor with four independent CC7 assignments.
         </figcaption>
     </figure>
 
@@ -1055,7 +1064,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
     <figure>
         <img src="images/PhoneCurveEditor.png" alt="Phone Curve Editor">
         <figcaption>
-            Curve definition in phone profile.
+            Phone curve editor showing Position and Slope for Low/High.
         </figcaption>
     </figure>
 

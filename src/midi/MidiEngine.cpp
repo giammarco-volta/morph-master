@@ -157,6 +157,7 @@ void MidiEngine::start()
 
   MidiIn_MonoInterpreter::Configuration midiInConfiguration;
   midiInConfiguration.ignoreProgramChanges = true;
+  midiInConfiguration.forwardOffChannelControlChanges = true;
 
   midiInConfiguration.ignoredControlChanges.set(0);
   midiInConfiguration.ignoredControlChanges.set(6);
@@ -287,7 +288,17 @@ void MidiEngine::setSnapshot(const MidiEngineSnapshot& snapshot)
   const auto oldSnapshot = snapshot_;
 
   /* Install the new snapshot before sending MIDI derived from it. */
+  if (snapshot_.curveControlRevision != snapshot.curveControlRevision)
+    { curveControlValues_.fill(-1); pendingCurveEdits_.clear(); }
   snapshot_ = snapshot;
+  pendingCurveEdits_.erase(std::remove_if(pendingCurveEdits_.begin(),pendingCurveEdits_.end(),
+    [&](const PendingCurveEdit& e) { return e.serial<=snapshot.curveEditAcknowledged; }),pendingCurveEdits_.end());
+  for(const auto& e:pendingCurveEdits_) {
+    auto& curve=e.slot<2 ? snapshot_.keyCurve : snapshot_.velCurve;
+    setCurveParameter(curve,e.slot%2,curveParameter(curve,e.slot%2)+e.delta,
+      e.slot<2 ? snapshot_.surfaceMinNote : 0,e.slot<2 ? snapshot_.surfaceMaxNote : 127);
+  }
+  sanitizeCurveCcAssignments(snapshot_.curveControls,snapshot_.midiInChannel);
 
   if (muteSoloChanged)
   {
@@ -357,6 +368,13 @@ void MidiEngine::setSnapshot(const MidiEngineSnapshot& snapshot)
   if (pitchBendRangeChanged && !midiOutPortChanged)
     applyPitchBendRangeToAssignedTracks(false);
 
+  const auto sameCurve=[](const PiecewiseCurve& a,const PiecewiseCurve& b) {
+    return a.x0==b.x0 && a.x1==b.x1 && a.y0==b.y0 && a.y1==b.y1;
+  };
+  if(!sameCurve(oldSnapshot.keyCurve,snapshot_.keyCurve)
+      || !sameCurve(oldSnapshot.velCurve,snapshot_.velCurve))
+    refreshMonoCurveGains();
+
   if (hasAnyAssignedTrack())
     noAssignedTracksWarningSent_ = false;
 }
@@ -422,6 +440,7 @@ bool MidiEngine::openCurrentMidiIn(bool forceReopen)
 
   if (index < 0)
   {
+    curveControlValues_.fill(-1);
     midiIn_->close();
     midiInIndex_ = -1;
     midiInPort_.clear();
@@ -442,6 +461,7 @@ bool MidiEngine::openCurrentMidiIn(bool forceReopen)
     return true;
   }
 
+  curveControlValues_.fill(-1);
   midiIn_->close();
 
   if (!midiIn_->open(index))
@@ -533,6 +553,11 @@ void MidiEngine::handleIncomingMidiEvent(const MidiInEvent& ev)
     return;
 
   const uint8_t message = ev.message();
+  if(message==0xB0) {
+    handleIncomingControlChange(ev.data1,ev.data2,ev.channel());
+    return;
+  }
+  if(ev.channel()!=snapshot_.midiInChannel) return;
 
   if (message == 0xD0)
   {
@@ -543,12 +568,6 @@ void MidiEngine::handleIncomingMidiEvent(const MidiInEvent& ev)
   if (message == 0xA0)
   {
     handleIncomingPolyPressure(ev.data1, ev.data2);
-    return;
-  }
-
-  if (message == 0xB0)
-  {
-    handleIncomingControlChange(ev.data1, ev.data2);
     return;
   }
 
@@ -621,17 +640,49 @@ void MidiEngine::handleIncomingMidiEvent(const MidiInEvent& ev)
 }
 
 //-----------------------------------------------------------------------------
-void MidiEngine::handleIncomingControlChange(uint8_t controller, uint8_t value)
+void MidiEngine::previewCurveControlValue(int slot, int value, quint64 revision)
+{
+  if (revision!=snapshot_.curveControlRevision || slot<0 || slot>=4) return;
+  const int cc=snapshot_.curveControls[slot].cc;
+  const int channel=curveCcChannel(snapshot_.curveControls[slot],snapshot_.midiInChannel);
+  if (!isAssignableCurveCc(cc,channel,snapshot_.midiInChannel)) return;
+  handleIncomingControlChange(static_cast<uint8_t>(cc),static_cast<uint8_t>(std::clamp(value,0,127)),channel);
+}
+
+void MidiEngine::handleIncomingControlChange(uint8_t controller, uint8_t value, int channel)
 //-----------------------------------------------------------------------------
 {
   /*
-   * MidiIn_MonoInterpreter has already filtered Program Change,
-   * Bank Select (CC0/CC32) and RPN/NRPN parameter controls.
+   * On the note channel, MidiIn_MonoInterpreter has already filtered Program
+   * Change, Bank Select and RPN/NRPN. Dedicated channels deliver all CCs.
    *
    * The user may additionally protect the controller values belonging to
    * the preset setup. Expression is always reserved for MorphMaster in Mono
    * mode because CC11 performs the real-time crossfade between outputs.
    */
+  if(channel<0) channel=snapshot_.midiInChannel;
+  if (isAssignableCurveCc(controller,channel,snapshot_.midiInChannel)) {
+    for (int slot=0; slot<4; ++slot) {
+      if (snapshot_.curveControls[slot].cc != controller
+          || curveCcChannel(snapshot_.curveControls[slot],snapshot_.midiInChannel)!=channel) continue;
+      const int previous=curveControlValues_[slot];
+      curveControlValues_[slot]=value; // Track hardware even while the curve is at a limit.
+      if(previous>=0 && previous!=value) {
+        const int delta=value-previous;
+        auto& curve=slot<2 ? snapshot_.keyCurve : snapshot_.velCurve;
+        setCurveParameter(curve,slot%2,curveParameter(curve,slot%2)+delta,
+          slot<2 ? snapshot_.surfaceMinNote : 0,slot<2 ? snapshot_.surfaceMaxNote : 127);
+        const auto serial=++curveEditSerial_;
+        pendingCurveEdits_.push_back({slot,delta,serial});
+        refreshMonoCurveGains();
+        emit curveControlValueChanged(slot,delta,snapshot_.curveControlRevision,serial);
+      }
+      return; // Assigned controls never reach the sound generator.
+    }
+  }
+
+  if(channel!=snapshot_.midiInChannel) return;
+
   const bool expressionReservedByMonoMode =
     controller == 11 && snapshot_.playMode == PlayMode::Mono;
 
@@ -719,7 +770,7 @@ void MidiEngine::handleIncomingPolyPressure(uint8_t note, uint8_t pressure)
       continue;
     }
 
-    const int transposedNote = static_cast<int>(note) + FootageTransposition[static_cast<size_t>(track.footage)];
+    const int transposedNote = activeMorphNotes_[note].sentNotes[trackIndex];
 
     /*
      * Do not clamp an out-of-range transposed note: clamping would
@@ -938,9 +989,25 @@ void MidiEngine::sendPitchBendRange(int trackIndex, int semitones)
 void MidiEngine::handleIncomingNoteOn(uint8_t note, uint8_t velocity)
 //-------------------------------------------------------------------
 {
-  registerMonitorNoteOn(note, velocity);
+  // A repeated key starts a fresh voice, without affecting other held keys.
+  auto& state = activeMorphNotes_[note];
+  for (int track = 0; track < 16; ++track) {
+    if (state.sentNotes[track] >= 0)
+      sendTrackNoteOff(track, static_cast<uint8_t>(state.sentNotes[track]), 0);
+  }
+  state.sentNotes.fill(-1);
+  state.routingMask = 0;
+  state.held = true;
+  state.velocity = velocity;
+  routeHeldNote(note, velocity);
+}
 
+void MidiEngine::routeHeldNote(uint8_t note, uint8_t velocity)
+{
+  auto& state = activeMorphNotes_[note];
   const MorphOutputGains gains = calculateMorphOutputGains(note, velocity);
+  state.routingMask = 0xff;
+  registerMonitorNoteOn(note, velocity);
   registerMorphNoteOn(note, gains);
 
   if (!hasAnyAssignedTrack())
@@ -1000,7 +1067,10 @@ void MidiEngine::handleIncomingNoteOn(uint8_t note, uint8_t velocity)
       sendTrackControlChange(trackIndex, 74, cc74);
     }
 
-    sendTrackNoteOn(trackIndex, note + FootageTransposition[static_cast<size_t>(track.footage)], scaled_velocity);
+    const int sentNote = note + FootageTransposition[static_cast<size_t>(track.footage)];
+    if (sentNote >= 0 && sentNote <= 127
+        && sendTrackNoteOn(trackIndex, static_cast<uint8_t>(sentNote), scaled_velocity))
+      state.sentNotes[trackIndex] = sentNote;
   }
 }
 
@@ -1011,15 +1081,12 @@ void MidiEngine::handleIncomingNoteOff(uint8_t note, uint8_t velocity)
   registerMonitorNoteOff(note);
   registerMorphNoteOff(note);
 
-  for (int trackIndex = 0; trackIndex < 16; ++trackIndex)
-  {
-    const auto& track = snapshot_.tracks[trackIndex];
-
-    if (track.morphOutput == MorphOutputId::None || !isMorphOutputEnabled(track.morphOutput))
-      continue;
-
-    sendTrackNoteOff(trackIndex, note + FootageTransposition[static_cast<size_t>(track.footage)], velocity);
+  auto& state = activeMorphNotes_[note];
+  for (int trackIndex = 0; trackIndex < 16; ++trackIndex) {
+    if (state.sentNotes[trackIndex] >= 0)
+      sendTrackNoteOff(trackIndex, static_cast<uint8_t>(state.sentNotes[trackIndex]), velocity);
   }
+  state.sentNotes.fill(-1);
 }
 
 //---------------------------------------------------------------------------------------
@@ -1028,6 +1095,7 @@ MidiEngine::MorphOutputGains MidiEngine::calculateMorphOutputGains(uint8_t note,
 //---------------------------------------------------------------------------------------
 {
   MorphOutputGains gains{};
+
 
   for (int outputIndex = 0; outputIndex < MorphOutputCount; ++outputIndex)
   {
@@ -1049,6 +1117,30 @@ MidiEngine::MorphOutputGains MidiEngine::calculateMorphOutputGains(uint8_t note,
 }
 
 //------------------------------------------------------------------------------------
+void MidiEngine::refreshMonoCurveGains()
+{
+  if (snapshot_.playMode != PlayMode::Mono) return;
+  for (int note=0; note<128; ++note) {
+    auto& state=activeMorphNotes_[note];
+    if (!state.held) continue;
+    state.gains=calculateMorphOutputGains(static_cast<uint8_t>(note),state.velocity);
+    for (int track=0; track<16; ++track) {
+      if (state.sentNotes[track]<0) continue;
+      const auto& setup=snapshot_.tracks[track];
+      const int output=static_cast<int>(setup.morphOutput);
+      if (output>=MorphOutputCount || !isMorphOutputEnabled(setup.morphOutput)) continue;
+      const auto expression=static_cast<uint8_t>(std::clamp(int(std::lround(127*state.gains[output])),0,127));
+      sendTrackControlChange(track,11,expression);
+      const auto cc71=timbreControllerValue(setup.timbre1,expression);
+      const auto cc74=timbreControllerValue(setup.timbre2,expression);
+      if(last_cc71_[track]!=cc71) { last_cc71_[track]=cc71; sendTrackControlChange(track,71,cc71); }
+      if(last_cc74_[track]!=cc74) { last_cc74_[track]=cc74; sendTrackControlChange(track,74,cc74); }
+    }
+  }
+  monitorFeedbackDirty_=true;
+  recomputeDisplayedMorphOutputGains();
+}
+
 void MidiEngine::registerMorphNoteOn(uint8_t note, const MorphOutputGains& gains)
 //------------------------------------------------------------------------------------
 {
@@ -1083,6 +1175,7 @@ void MidiEngine::releaseSustainedMorphNotes()
       state.sounding = false;
   }
 
+  monitorFeedbackDirty_ = true;
   recomputeDisplayedMorphOutputGains();
 }
 
@@ -1224,12 +1317,16 @@ void MidiEngine::publishMonitorFeedback()
     const bool notYetShown = state.onGeneration > state.acknowledgedOnGeneration;
     const bool retained = state.retainUntilMs > nowMs;
 
-    if (!state.active && !notYetShown && !retained)
+    if (!state.active && !activeMorphNotes_[note].sounding && !notYetShown && !retained)
       continue;
 
     QVariantMap noteData;
     noteData.insert(QStringLiteral("note"), note);
     noteData.insert(QStringLiteral("velocity"), static_cast<int>(state.velocity));
+    QVariantList noteGains;
+    for (double gain : activeMorphNotes_[note].gains) noteGains.append(gain);
+    noteData.insert(QStringLiteral("gains"), noteGains);
+    noteData.insert(QStringLiteral("outputMask"), activeMorphNotes_[note].routingMask);
     notes.append(noteData);
     publishedMonitorNoteGenerations_[note] = state.onGeneration;
   }
@@ -1515,6 +1612,7 @@ void MidiEngine::sendAllNotesOffAndExpressionReset(int trackIndex)
   if (!openCurrentMidiOut(false))
     return;
 
+  for (auto& state : activeMorphNotes_) state.sentNotes[trackIndex] = -1;
   sendTrackControlChange(trackIndex, 64, 0);
   sendTrackControlChange(trackIndex, 123, 0);
   sendTrackControlChange(trackIndex, 11, 127);

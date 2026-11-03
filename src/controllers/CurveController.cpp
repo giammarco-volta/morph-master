@@ -36,6 +36,12 @@ CurveController::CurveController( SettingsController& settingsController,
                                   , curveSet_(curveSet)
 //-------------------------------------------------------------------------
 {
+  connect(&settingsController_, &SettingsController::curveControlValuesChanged, this, &CurveController::effectiveCurveChanged);
+  connect(&settingsController_, &SettingsController::curveControlsChanged, this, &CurveController::effectiveCurveChanged);
+  connect(this, &CurveController::x1Changed, this, &CurveController::effectiveCurveChanged);
+  connect(this, &CurveController::x2Changed, this, &CurveController::effectiveCurveChanged);
+  connect(this, &CurveController::y1Changed, this, &CurveController::effectiveCurveChanged);
+  connect(this, &CurveController::y2Changed, this, &CurveController::effectiveCurveChanged);
   if (curveSet_ == CurveSet::Key)
   {
     connect(&settingsController_,
@@ -97,7 +103,16 @@ int CurveController::maxX() const
 }
 
 //-----------------------------
-int CurveController::x1() const
+double CurveController::effectiveX1() const
+{
+  return settingsController_.effectiveCurveTransform(curveSet_==CurveSet::Key ? 0 : 1).outputFor(x1());
+}
+double CurveController::effectiveX2() const
+{
+  return settingsController_.effectiveCurveTransform(curveSet_==CurveSet::Key ? 0 : 1).outputFor(x2());
+}
+
+double CurveController::x1() const
 //-----------------------------
 {
   const auto& preset = settingsController_.currentPreset();
@@ -108,20 +123,20 @@ int CurveController::x1() const
 }
 
 //------------------------------------
-void CurveController::setX1(int value)
+void CurveController::setX1(double value)
 //------------------------------------
 {
   auto& preset = settingsController_.currentPreset();
 
   auto& curve = curveSet_ == CurveSet::Key ? preset.keyCurve : preset.velCurve;
 
-  const int currentX2 = clampInt(curve.x1, minX() + 1, maxX());
-  const int newValue = clampInt(value, minX(), currentX2 - 1);
+  const double currentX2 = std::clamp(curve.x1, double(minX()+1), double(maxX()));
+  const double newValue = std::clamp(value, double(minX()), currentX2-1);
 
   if (curve.x0 == newValue)
     return;
 
-  curve.x0 = static_cast<uint8_t>(newValue);
+  curve.x0 = newValue;
 
   emit x1Changed();
 
@@ -159,7 +174,7 @@ void CurveController::setY1(int value)
   settingsController_.notifyMidiRelevantStateChanged();
 }
 //-----------------------------
-int CurveController::x2() const
+double CurveController::x2() const
 //-----------------------------
 {
   const auto& preset = settingsController_.currentPreset();
@@ -170,20 +185,20 @@ int CurveController::x2() const
 }
 
 //------------------------------------
-void CurveController::setX2(int value)
+void CurveController::setX2(double value)
 //------------------------------------
 {
   auto& preset = settingsController_.currentPreset();
 
   auto& curve = curveSet_ == CurveSet::Key ? preset.keyCurve : preset.velCurve;
 
-  const int currentX1 = clampInt(curve.x0, minX(), maxX() - 1);
-  const int newValue = clampInt(value, currentX1 + 1, maxX());
+  const double currentX1 = std::clamp(curve.x0, double(minX()), double(maxX()-1));
+  const double newValue = std::clamp(value, currentX1+1, double(maxX()));
 
   if (curve.x1 == newValue)
     return;
 
-  curve.x1 = static_cast<uint8_t>(newValue);
+  curve.x1 = newValue;
 
   emit x2Changed();
 
@@ -234,16 +249,16 @@ bool CurveController::normalizeXToCurrentRange()
   const int minValue = minX();
   const int maxValue = maxX();
 
-  int newX1 = clampInt(curve.x0, minValue, maxValue - 1);
-  int newX2 = clampInt(curve.x1, newX1 + 1, maxValue);
+  double newX1 = std::clamp(curve.x0, double(minValue), double(maxValue-1));
+  double newX2 = std::clamp(curve.x1, newX1+1, double(maxValue));
 
   const bool changed = curve.x0 != newX1 || curve.x1 != newX2;
 
   if (!changed)
     return false;
 
-  curve.x0 = static_cast<uint8_t>(newX1);
-  curve.x1 = static_cast<uint8_t>(newX2);
+  curve.x0 = newX1;
+  curve.x1 = newX2;
 
   return true;
 }
@@ -258,4 +273,22 @@ void CurveController::notifyDataChanged()
   emit y1Changed();
   emit x2Changed();
   emit y2Changed();
+}
+void CurveController::setPoints(double firstX, int firstY, double lastX, int lastY)
+{
+  if(!std::isfinite(firstX) || !std::isfinite(lastX)) return;
+  auto& preset=settingsController_.currentPreset();
+  auto& curve=curveSet_==CurveSet::Key ? preset.keyCurve : preset.velCurve;
+  curve.x0=std::clamp(firstX,double(minX()),double(maxX()-1));
+  curve.x1=std::clamp(lastX,curve.x0+1,double(maxX()));
+  curve.y0=std::clamp(firstY,0,100);
+  curve.y1=std::clamp(lastY,0,100);
+  notifyDataChanged();
+  settingsController_.notifyMidiRelevantStateChanged();
+}
+
+void CurveController::notifyHorizontalChanged()
+{
+  emit x1Changed();
+  emit x2Changed();
 }

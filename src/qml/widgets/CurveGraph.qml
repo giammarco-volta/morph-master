@@ -4,9 +4,9 @@ import MorphMaster
 Item {
     id: root
 
-    property int x1: 36
+    property real x1: 36
     property int y1: 0
-    property int x2: 84
+    property real x2: 84
     property int y2: 100
 
     property int minX: 0
@@ -136,15 +136,17 @@ Item {
      * equal-power gain with sin(weight * pi/2), or cos(...) for the
      * complementary Morph Output.
      */
-    function curveWeightAt(x, yA, yB) {
-        if (x <= root.x1)
+    function curveWeightAt(x, yA, yB, base) {
+        const firstX = root.x1
+        const lastX = root.x2
+        if (x <= firstX)
             return yA
 
-        if (x >= root.x2)
+        if (x >= lastX)
             return yB
 
-        const span = Math.max(1, root.x2 - root.x1)
-        const t = (x - root.x1) / span
+        const span = Math.max(1, lastX - firstX)
+        const t = (x - firstX) / span
 
         return yA + (yB - yA) * t
     }
@@ -161,8 +163,8 @@ Item {
         return Math.asin(normalizedGain) * 2.0 / Math.PI * 100.0
     }
 
-    function displayedCurveValueAt(x, yA, yB, inverted) {
-        return gainFromWeight(curveWeightAt(x, yA, yB), inverted)
+    function displayedCurveValueAt(x, yA, yB, inverted, base) {
+        return gainFromWeight(curveWeightAt(x, yA, yB, base), inverted)
     }
 
     function pixelToCurve(px, py) {
@@ -334,13 +336,13 @@ Item {
                 ctx.stroke()
             }
 
-            function drawCurve(yA, yB, inverted, outputId) {
+            function drawCurve(yA, yB, inverted, outputId, base) {
                 const visibleStart = root.minX
                 const visibleEnd = root.maxX
                 const sampleCount = Math.max(32, Math.ceil(r.width))
 
-                ctx.setLineDash([])
-                ctx.strokeStyle = root.morphOutputColor(outputId)
+                ctx.setLineDash(base ? [3, 4] : [])
+                ctx.strokeStyle = base ? Qt.rgba(1,1,1,0.35) : root.morphOutputColor(outputId)
                 ctx.lineWidth = 2.2
 
                 ctx.beginPath()
@@ -349,7 +351,7 @@ Item {
                     const x = visibleStart
                             + (visibleEnd - visibleStart) * i / sampleCount
                     const y = root.displayedCurveValueAt(
-                                  x, yA, yB, inverted)
+                                  x, yA, yB, inverted, base)
                     const pixel = root.curveToPixel(x, y)
 
                     if (i === 0)
@@ -387,6 +389,7 @@ Item {
             ctx.beginPath()
             ctx.rect(r.left, r.top, r.width, r.height)
             ctx.clip()
+
 
             drawCurve(root.y1, root.y2, false,
                       root.primaryMorphOutputId)

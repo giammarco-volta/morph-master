@@ -35,6 +35,9 @@ struct MidiEngineSnapshot
   int surfaceMaxNote = 127;
 
   std::array<TrackPresetData, 16> tracks{};
+  CurveCcAssignments curveControls = defaultCurveCcAssignments();
+  quint64 curveControlRevision = 0;
+  quint64 curveEditAcknowledged = 0;
   PiecewiseCurve keyCurve;
   PiecewiseCurve velCurve;
 };
@@ -42,6 +45,7 @@ struct MidiEngineSnapshot
 class MidiEngine : public QObject
 {
   Q_OBJECT
+  friend class MidiEngineRoutingTest;
 
 public:
   explicit MidiEngine(QObject* parent = nullptr);
@@ -57,7 +61,9 @@ private:
   void handleIncomingMidiEvent(const MidiInEvent& ev);
   void handleIncomingNoteOn(uint8_t note, uint8_t velocity);
   void handleIncomingNoteOff(uint8_t note, uint8_t velocity);
-  void handleIncomingControlChange(uint8_t controller, uint8_t value);
+  void routeHeldNote(uint8_t note, uint8_t velocity);
+  void refreshMonoCurveGains();
+  void handleIncomingControlChange(uint8_t controller, uint8_t value, int channel=-1);
   void handleIncomingPitchBend(uint8_t lsb, uint8_t msb);
   void handleIncomingChannelPressure(uint8_t pressure);
   void handleIncomingPolyPressure(uint8_t note, uint8_t pressure);
@@ -124,11 +130,13 @@ public slots:
   void surfaceMove(double xNorm, double yNorm);
   void surfaceRelease();
 
+  void previewCurveControlValue(int slot, int value, quint64 revision);
   void testNoteOn(int note, int velocity);
   void testNoteOff(int note);
   void acknowledgeMonitorFeedback(quint64 sequence);
 
 signals:
+  void curveControlValueChanged(int slot, int delta, quint64 revision, quint64 serial);
   void midiInputPortsChanged(QStringList ports);
   void midiOutputPortsChanged(QStringList ports);
 
@@ -151,10 +159,14 @@ private:
   int midiInIndex_ = -1;
   int midiOutIndex_ = -1;
 
+  struct PendingCurveEdit { int slot; int delta; quint64 serial; };
+  std::vector<PendingCurveEdit> pendingCurveEdits_;
+  quint64 curveEditSerial_ = 0;
   QString midiInPort_;
   QString midiOutPort_;
 
   MidiEngineSnapshot snapshot_;
+  std::array<int,4> curveControlValues_{{-1,-1,-1,-1}};
 
   std::list<uint8_t> currNotes_;
   std::array<bool, 128> activeInputNotes_{};
@@ -172,6 +184,9 @@ private:
     bool held = false;
     bool sounding = false;
     MorphOutputGains gains{};
+    uint8_t velocity = 0;
+    uint8_t routingMask = 0;
+    std::array<int, 16> sentNotes = {{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
   };
 
   std::array<ActiveMorphNote, 128> activeMorphNotes_{};
