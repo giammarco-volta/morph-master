@@ -111,6 +111,7 @@ namespace
     QJsonObject obj;
     obj["name"] = output.name;
     obj["customName"] = output.customName;
+    obj["nameTrackIndex"] = output.nameTrackIndex;
     return obj;
   }
 
@@ -119,6 +120,7 @@ namespace
     MorphOutputPresetData output;
     output.name = obj.value("name").toString().trimmed().left(40);
     output.customName = obj.value("customName").toBool(false);
+    output.nameTrackIndex = obj.value("nameTrackIndex").toInt(-1);
     return output;
   }
 

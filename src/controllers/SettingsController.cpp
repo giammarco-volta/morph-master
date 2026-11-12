@@ -1178,23 +1178,82 @@ QString SettingsController::automaticTrackProgramName(int trackIndex) const
   return kGeneralMidiProgramNames[programIndex];
 }
 
-//---------------------------------------------------------------------------------
-void SettingsController::initializeMorphOutputNameIfNeeded(int morphOutputIndex,
-                                                            int trackIndex)
-//---------------------------------------------------------------------------------
+void SettingsController::updateMorphOutputAfterAssignment(int oldOutput, int newOutput, int trackIndex)
 {
-  if (morphOutputIndex < 0 || morphOutputIndex >= static_cast<int>(currentPreset_.morphOutputs.size()))
-    return;
-
-  auto& output = currentPreset_.morphOutputs[morphOutputIndex];
-  if (!output.name.trimmed().isEmpty())
-    return;
-
-  output.name = automaticTrackProgramName(trackIndex).trimmed().left(40);
-  output.customName = false;
-
+  const int count = static_cast<int>(currentPreset_.morphOutputs.size());
+  if (oldOutput >= 0 && oldOutput < count && oldOutput != newOutput)
+  {
+    auto& output = currentPreset_.morphOutputs[oldOutput];
+    if (output.nameTrackIndex == trackIndex)
+      output.nameTrackIndex = -1;
+    int firstRemaining = -1;
+    for (int i = 0; i < 16; ++i)
+      if (currentPreset_.tracks[i].morphOutput == static_cast<MorphOutputId>(oldOutput))
+      {
+        firstRemaining = i;
+        break;
+      }
+    if (firstRemaining < 0)
+      output = MorphOutputPresetData{};
+    else if (output.nameTrackIndex < 0)
+    {
+      output.nameTrackIndex = firstRemaining;
+      if (!output.customName)
+        output.name = automaticTrackProgramName(firstRemaining).trimmed().left(40);
+    }
+  }
+  if (newOutput >= 0 && newOutput < count && oldOutput != newOutput)
+  {
+    auto& output = currentPreset_.morphOutputs[newOutput];
+    bool first = true;
+    for (int i = 0; i < 16; ++i)
+      if (i != trackIndex && currentPreset_.tracks[i].morphOutput == static_cast<MorphOutputId>(newOutput))
+      {
+        first = false;
+        break;
+      }
+    if (first)
+    {
+      output.customName = false;
+      output.nameTrackIndex = trackIndex;
+      output.name = automaticTrackProgramName(trackIndex).trimmed().left(40);
+    }
+  }
   if (morphOutputStateModel_)
     morphOutputStateModel_->setSpecificNames(currentPreset_.morphOutputs);
+}
+
+void SettingsController::updateMorphOutputProgramName(int trackIndex)
+{
+  const int outputIndex = static_cast<int>(currentPreset_.tracks[trackIndex].morphOutput);
+  if (outputIndex < 0 || outputIndex >= static_cast<int>(currentPreset_.morphOutputs.size()))
+    return;
+  auto& output = currentPreset_.morphOutputs[outputIndex];
+  if (output.customName || output.nameTrackIndex != trackIndex)
+    return;
+  output.name = automaticTrackProgramName(trackIndex).trimmed().left(40);
+  if (morphOutputStateModel_)
+    morphOutputStateModel_->setSpecificNames(currentPreset_.morphOutputs);
+}
+
+void SettingsController::normalizeMorphOutputNames()
+{
+  for (int outputIndex = 0; outputIndex < static_cast<int>(currentPreset_.morphOutputs.size()); ++outputIndex)
+  {
+    auto& output = currentPreset_.morphOutputs[outputIndex];
+    int first = -1;
+    for (int i = 0; i < 16; ++i)
+      if (currentPreset_.tracks[i].morphOutput == static_cast<MorphOutputId>(outputIndex))
+      {
+        first = i;
+        break;
+      }
+    if (first < 0)
+      output = MorphOutputPresetData{};
+    else if (output.nameTrackIndex < 0 || output.nameTrackIndex >= 16
+             || currentPreset_.tracks[output.nameTrackIndex].morphOutput != static_cast<MorphOutputId>(outputIndex))
+      output.nameTrackIndex = first;
+  }
 }
 
 //-------------------------------------------------------------------------
@@ -1208,16 +1267,13 @@ void SettingsController::setMorphOutputName(int morphOutputIndex,
   auto& output = currentPreset_.morphOutputs[morphOutputIndex];
   QString cleanName = name.trimmed().left(40);
 
+  if (!cleanName.isEmpty() && output.name == cleanName)
+    return;
+
   if (cleanName.isEmpty())
   {
-    for (int trackIndex = 0; trackIndex < static_cast<int>(currentPreset_.tracks.size()); ++trackIndex)
-    {
-      if (currentPreset_.tracks[trackIndex].morphOutput == static_cast<MorphOutputId>(morphOutputIndex))
-      {
-        cleanName = automaticTrackProgramName(trackIndex).trimmed().left(40);
-        break;
-      }
-    }
+    if (output.nameTrackIndex >= 0 && output.nameTrackIndex < 16)
+      cleanName = automaticTrackProgramName(output.nameTrackIndex).trimmed().left(40);
     output.customName = false;
   }
   else
@@ -1417,6 +1473,24 @@ void SettingsController::setMorphOutputSolo(int morphOutputIndex, bool solo)
 }
 
 //-------------------------------------------------------
+void SettingsController::resetTrack(int trackIndex)
+{
+  if (trackIndex < 0 || trackIndex >= 16) return;
+  const int oldOutput = static_cast<int>(currentPreset_.tracks[trackIndex].morphOutput);
+  currentPreset_.tracks[trackIndex] = TrackPresetData{};
+  updateMorphOutputAfterAssignment(oldOutput, static_cast<int>(MorphOutputId::None), trackIndex);
+  tracks_[trackIndex]->notifyDataChanged();
+  notifySurfaceMorphOutputsChanged(trackIndex);
+  emit curveControlValuesChanged();
+  const auto snapshot = makeMidiEngineSnapshot();
+  if (midiEngine_)
+    QMetaObject::invokeMethod(midiEngine_, [engine = midiEngine_, snapshot, trackIndex]() {
+      engine->sendAllNotesOffAndExpressionReset(trackIndex);
+      engine->setSnapshot(snapshot, trackIndex);
+      engine->resetTrackSetup(trackIndex);
+    }, Qt::QueuedConnection);
+}
+
 void SettingsController::notifyMidiRelevantStateChanged()
 //-------------------------------------------------------
 {
@@ -1654,6 +1728,7 @@ void SettingsController::applyPreset(const PresetData& preset)
   curveEditPublishTimer_.stop();
   pendingCurveNotifications_.fill(false);
   currentPreset_ = preset;
+  normalizeMorphOutputNames();
   sanitizeCurveCcAssignments(currentPreset_.curveControls,midiInChannel());
   ++curveControlRevision_;
   curveControlValues_.fill(-1);

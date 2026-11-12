@@ -72,26 +72,12 @@ void TrackController::setMorphOutput(int value)
     static_cast<int>(MorphOutputId::None));
 
   const auto newMorphOut = static_cast<MorphOutputId>(clampedValue);
-  const auto profile = MorphOutputProfile::GetProfile(newMorphOut);
-
+  const int oldOutput = static_cast<int>(track.morphOutput);
   const bool morphOutChangedValue = track.morphOutput != newMorphOut;
-  bool targetHadTracks = false;
-  if (newMorphOut != MorphOutputId::None)
-  {
-    for (int i = 0; i < static_cast<int>(preset.tracks.size()); ++i)
-    {
-      if (i != trackIndex_ && preset.tracks[i].morphOutput == newMorphOut)
-      {
-        targetHadTracks = true;
-        break;
-      }
-    }
-  }
-
   track.morphOutput = newMorphOut;
 
-  if (morphOutChangedValue && newMorphOut != MorphOutputId::None && !targetHadTracks)
-    settingsController_.initializeMorphOutputNameIfNeeded(clampedValue, trackIndex_);
+  if (morphOutChangedValue)
+    settingsController_.updateMorphOutputAfterAssignment(oldOutput, clampedValue, trackIndex_);
 
   if (morphOutChangedValue)
     emit morphOutputChanged();
@@ -438,6 +424,7 @@ void TrackController::selectInstrumentProgram(int bankMSB, int bankLSB, int prog
   track.program_cc32 = newCc32;
   track.program_number = newProgram;
   settingsController_.sendTrackBankSelectAndProgram(trackIndex_, track.program_cc0, track.program_cc32, track.program_number);
+  settingsController_.updateMorphOutputProgramName(trackIndex_);
   emit instrumentProgramDisplayNameChanged();
   if (cc0Changed) emit bankMSBChanged();
   if (cc32Changed) emit bankLSBChanged();
@@ -465,6 +452,7 @@ void TrackController::setBankMSB(int value)
 
   track.program_cc0 = newValue;
 
+  settingsController_.updateMorphOutputProgramName(trackIndex_);
   emit bankMSBChanged();
   emit instrumentProgramDisplayNameChanged();
 }
@@ -490,6 +478,7 @@ void TrackController::setBankLSB(int value)
 
   track.program_cc32 = newValue;
 
+  settingsController_.updateMorphOutputProgramName(trackIndex_);
   emit bankLSBChanged();
   emit instrumentProgramDisplayNameChanged();
 }
@@ -517,11 +506,17 @@ void TrackController::setProgramNumber(int value)
 
   settingsController_.sendTrackBankSelectAndProgram(trackIndex_, track.program_cc0, track.program_cc32, track.program_number);
 
+  settingsController_.updateMorphOutputProgramName(trackIndex_);
   emit programNumberChanged();
   emit instrumentProgramDisplayNameChanged();
 }
 
 //---------------------------------------
+void TrackController::reset()
+{
+  settingsController_.resetTrack(trackIndex_);
+}
+
 void TrackController::notifyDataChanged()
 //---------------------------------------
 {

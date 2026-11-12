@@ -9,6 +9,18 @@ Item {
 
     /* Tablet/desktop show both global curves; phone shows one at a time. */
     property bool singleCurveMode: false
+    property var feedbackNotes: []
+
+    Connections {
+        target: SettingsController
+        function onMonitorFeedbackChanged(notes, gains) {
+            page.feedbackNotes = notes ? notes : []
+        }
+    }
+
+    Component.onCompleted: {
+        page.feedbackNotes = SettingsController.currentMonitorFeedbackNotes()
+    }
 
     signal curveActivated(int curveIndex)
 
@@ -88,6 +100,7 @@ Item {
         readonly property var curve:
             page.curveAt(curveIndex)
 
+        feedbackNotes: page.feedbackNotes
         primaryMorphOutputId: curveIndex === 0 ? 6 : 4
         complementaryMorphOutputId: curveIndex === 0 ? 2 : 0
 

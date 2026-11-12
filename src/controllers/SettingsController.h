@@ -226,13 +226,16 @@ public:
 
   QStringList surfaceMorphOutputTrackTexts() const;
   void notifySurfaceMorphOutputsChanged(int trackIndex);
-  void initializeMorphOutputNameIfNeeded(int morphOutputIndex, int trackIndex);
+  void updateMorphOutputAfterAssignment(int oldOutput, int newOutput, int trackIndex);
+  void updateMorphOutputProgramName(int trackIndex);
+  void normalizeMorphOutputNames();
   QVariantList surfaceMorphOutputTrackMasks() const;
   QAbstractItemModel* morphOutputStateModel() const;
   int morphOutputMuteMask() const;
   int morphOutputSoloMask() const;
 
   void notifyMidiRelevantStateChanged();
+  void resetTrack(int trackIndex);
   QStringList presetNames() const;
   Q_INVOKABLE QStringList findPresetNames(const QString& nameFilter) const;
 

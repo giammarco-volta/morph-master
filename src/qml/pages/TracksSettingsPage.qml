@@ -44,7 +44,12 @@ Item {
             anchors.margins: 5
             spacing: 5
 
-            Label {
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 30
+                Layout.minimumHeight: 30
+                Layout.maximumHeight: 30
+                Label {
                 text: "Track " + panel.trackNumber
 
                 color: Theme.text
@@ -57,6 +62,23 @@ Item {
                 Layout.maximumHeight: 20
 
                 verticalAlignment: Text.AlignVCenter
+                }
+                Button {
+                    text: "Reset"
+                    Layout.preferredHeight: 30
+                    Layout.preferredWidth: 54
+                    topPadding: 0
+                    bottomPadding: 0
+                    font.pixelSize: Theme.labelFontSize
+                    contentItem: Text {
+                        text: "Reset"
+                        color: Theme.text
+                        font.pixelSize: Theme.labelFontSize
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    onClicked: SettingsController.track(panel.trackNumber).reset()
+                }
             }
 
             SingleTrackEditor {
@@ -83,11 +105,33 @@ Item {
     Component {
         id: singleTrackComponent
 
-        SingleTrackEditor {
+        ColumnLayout {
+            spacing: 2
+            Button {
+                text: "Reset"
+                Layout.alignment: Qt.AlignRight
+                Layout.preferredHeight: 30
+                Layout.preferredWidth: 54
+                topPadding: 0
+                bottomPadding: 0
+                font.pixelSize: Theme.labelFontSize
+                contentItem: Text {
+                    text: "Reset"
+                    color: Theme.text
+                    font.pixelSize: Theme.labelFontSize
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: SettingsController.track(root.normalizedFirstTrack).reset()
+            }
+            SingleTrackEditor {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             trackNumber: root.normalizedFirstTrack
 
             onMorphOutputEditRequested: function(morphOutputIndex) {
                 root.morphOutputEditRequested(morphOutputIndex)
+            }
             }
         }
     }

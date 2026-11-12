@@ -255,7 +255,7 @@ void MidiEngine::stop()
 }
 
 //--------------------------------------------------------------
-void MidiEngine::setSnapshot(const MidiEngineSnapshot& snapshot)
+void MidiEngine::setSnapshot(const MidiEngineSnapshot& snapshot, int resettingTrack)
 //--------------------------------------------------------------
 {
   const bool midiInPortChanged = snapshot_.midiInPort != snapshot.midiInPort;
@@ -282,7 +282,8 @@ void MidiEngine::setSnapshot(const MidiEngineSnapshot& snapshot)
 
     morphOutputChanged[trackIndex] = oldTrack.morphOutput != newTrack.morphOutput;
 
-    anyTuningSettingsChanged = anyTuningSettingsChanged || tuningSettingsChanged[trackIndex];
+    anyTuningSettingsChanged = anyTuningSettingsChanged
+      || (trackIndex != resettingTrack && tuningSettingsChanged[trackIndex]);
   }
 
   const auto oldSnapshot = snapshot_;
@@ -1463,52 +1464,45 @@ void MidiEngine::sendTrackBankSelectAndProgram(int trackIndex, int bankMSB, int 
 
 //---------------------------------------------------
 void MidiEngine::sendCurrentPresetTrackSetup()
-//---------------------------------------------------
 {
   if (!openCurrentMidiOut(false))
     return;
 
   for (int trackIndex = 0; trackIndex < 16; ++trackIndex)
   {
-    const auto& track = snapshot_.tracks[trackIndex];
-
-    if (track.morphOutput == MorphOutputId::None)
-      continue;
-
-    /*
-     * Program Change can reset controller and tuning state on the receiving
-     * instrument, so send the patch first and then rebuild the complete
-     * per-track setup.
-     */
-    sendTrackBankSelectAndProgram(trackIndex,
-                                  track.program_cc0,
-                                  track.program_cc32,
-                                  track.program_number);
-
-    sendTrackControlChange(trackIndex, 7, track.volume);
-    sendTrackControlChange(trackIndex, 10,
-                           std::clamp(static_cast<int>(track.panorama) + 64,
-                                      0, 127));
-    sendTrackControlChange(trackIndex, 91, track.reverb);
-    sendTrackControlChange(trackIndex, 93, track.chorus);
-
-    /* Start every newly loaded preset from full expression. */
-    sendTrackControlChange(trackIndex, 11, 127);
-
-    const uint8_t cc71 = timbreControllerValue(track.timbre1, 127);
-    const uint8_t cc74 = timbreControllerValue(track.timbre2, 127);
-
-    last_cc71_[trackIndex] = cc71;
-    last_cc74_[trackIndex] = cc74;
-
-    sendTrackControlChange(trackIndex, 71, cc71);
-    sendTrackControlChange(trackIndex, 74, cc74);
-
-    /* Program changes may also reset channel-wide RPN settings. */
-    lastSentFineTuningCents_[trackIndex] = 1000;
-    applyTrackTuning(trackIndex);
-    sendPitchBendRange(trackIndex, snapshot_.pitchBendRange);
+    if (snapshot_.tracks[trackIndex].morphOutput != MorphOutputId::None)
+      sendTrackSetup(trackIndex);
   }
+}
+
+void MidiEngine::resetTrackSetup(int trackIndex)
+{
+  if (trackIndex < 0 || trackIndex >= 16)
+    return;
+  currentRandomDetuneCents_[trackIndex] = 0;
+  sendTrackSetup(trackIndex);
+}
+
+void MidiEngine::sendTrackSetup(int trackIndex)
+{
+  if (trackIndex < 0 || trackIndex >= 16 || !openCurrentMidiOut(false))
+    return;
+  const auto& track = snapshot_.tracks[trackIndex];
+  sendTrackBankSelectAndProgram(trackIndex, track.program_cc0,
+                                track.program_cc32, track.program_number);
+  sendTrackControlChange(trackIndex, 7, track.volume);
+  sendTrackControlChange(trackIndex, 10, std::clamp(int(track.panorama) + 64, 0, 127));
+  sendTrackControlChange(trackIndex, 91, track.reverb);
+  sendTrackControlChange(trackIndex, 93, track.chorus);
+  sendTrackControlChange(trackIndex, 11, 127);
+
+  last_cc71_[trackIndex] = timbreControllerValue(track.timbre1, 127);
+  last_cc74_[trackIndex] = timbreControllerValue(track.timbre2, 127);
+  sendTrackControlChange(trackIndex, 71, last_cc71_[trackIndex]);
+  sendTrackControlChange(trackIndex, 74, last_cc74_[trackIndex]);
+  lastSentFineTuningCents_[trackIndex] = 1000;
+  applyTrackTuning(trackIndex);
+  sendPitchBendRange(trackIndex, snapshot_.pitchBendRange);
 }
 
 //-----------------------------------------------------------

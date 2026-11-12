@@ -74,6 +74,7 @@ struct MorphOutputPresetData
 {
   QString name;
   bool customName = false;
+  int nameTrackIndex = -1;
 };
 
 //---------------

@@ -29,6 +29,7 @@ Rectangle {
     // Morph Outputs represented by the solid and dashed curves.
     property int primaryMorphOutputId: -1
     property int complementaryMorphOutputId: -1
+    property var feedbackNotes: []
 
     signal curveEdited()
     signal editingStarted()
@@ -394,6 +395,8 @@ Rectangle {
 
             CurveGraph {
                 id: graph
+                objectName: "curveGraph" + root.ccCurveIndex
+                feedbackNotes: root.feedbackNotes
 
                 Layout.fillWidth: true
                 Layout.fillHeight: root.fillAvailableHeight

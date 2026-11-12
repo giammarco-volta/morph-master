@@ -144,6 +144,8 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
 
     <p><strong>Recommended device:</strong> On Android, a tablet is recommended for setup and live performance, with more space for controls and monitoring. Phones are also supported for exploring the app and performing with setups that require less on-screen interaction.</p>
 
+    <p><strong>Morphora is performance-oriented.</strong> Its features are designed for live playing, including MIDI control of the morph curves during a performance.</p>
+
     <h3>The Idea Behind Morphora</h3>
     <p>
         Morphora grew out of a simple observation. Many workstations, synthesizers and sound modules can play several parts at the same time, but real-time keyboard performance often uses only one sound or a simple layer of two sounds. The multitimbral capacity of the instrument therefore remains largely unused unless it is driven by a sequencer.
@@ -249,6 +251,10 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
         <li>a separate MIDI output channel for each Morphora output track in use.</li>
     </ul>
 
+    <h2>Preparing the Receiving Instrument</h2>
+    <p>When you assign tracks to Morph Outputs, those tracks may already have settings on the receiving instrument. Morphora can control and save several track parameters, but it cannot edit every setting available on the instrument.</p>
+    <p>For a predictable starting point, you can send a <strong>GM2 Reset</strong> from Morphora, provided the receiving instrument supports it. Then set the programs, volumes, pan positions and other available parameters in Morphora. Be aware that a GM2 Reset affects the receiving device as a whole, so send it when resetting its current setup is appropriate.</p>
+    <p>You can also keep settings already made on the instrument, or edit them there if its controls offer more options. For example, Morphora does not provide full editing of the instrument's effects. Settings made only on the instrument and not controlled by Morphora are not stored in a Morphora preset and must be managed on the instrument itself.</p>
     <h2>The Control Track and Local Off</h2>
     <p>
         The control track should normally be set to <strong>Local Off</strong>, or to the equivalent setting provided by the instrument. It should send notes to Morphora without directly playing the instrument's internal sound engine.
@@ -1000,6 +1006,9 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
     <p>The first value from each slider establishes its starting position. If Slope is 87 and the first CC value is 1, Slope stays at 87. Moving the slider to 2 raises Slope to 88. At a limit, reversing direction takes effect immediately. Editing a point by hand preserves this reference. Loading a preset, changing assignments or reconnecting MIDI establishes a fresh reference on the next message.</p>
     <p>In Poly, notes already held keep their original contributions and the next note uses the edited curve. In Mono, a held note follows the curve through Expression, without a new attack.</p>
 
+    <h2>Emphasizing high and low notes</h2>
+    <p>Morphora does not provide dedicated Top or Bottom note functions that route only the highest or lowest held note to a particular sound. When an accent moves between notes as an interval or chord changes, such routing can require a held note to change sound or be retriggered. These abrupt transitions would work against Morphora's emphasis on fluid performance.</p>
+    <p>Instead, assign suitable sounds to the High and Low Morph Outputs and shape the Low/High curve to emphasize the keyboard regions where you want those sounds to emerge. For example, a flute on High can carry a melody in the upper register while gradually fading into the Low sound as you play lower. MIDI Position and Slope controls let you adjust that transition during the performance. This approach follows keyboard position and produces gradual crossfades, so it can create a similar musical effect without selecting the highest or lowest note of each chord.</p>
     <h2>Corner Morph Surfaces</h2>
     <p>
         The four corner Morph Outputs use both global curves. For the side Morph

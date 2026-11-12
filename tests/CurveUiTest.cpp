@@ -1,5 +1,6 @@
 #include "../src/controllers/SettingsController.h"
 #include "../src/controllers/CurveController.h"
+#include "../src/controllers/TrackController.h"
 #include <QGuiApplication>
 #include <QQuickWindow>
 #include <QQuickItem>
@@ -107,6 +108,20 @@ ApplicationWindow {
       auto p=value->mapToItem(page,QPointF(0,0));
       check(p.y()>=0 && p.y()+value->height()<=page->height(),"CC value clipped");
     }
+    auto* keyGraph=findVisualItem(window->contentItem(),"curveGraph0");
+    auto* velocityGraph=findVisualItem(window->contentItem(),"curveGraph1");
+    check(keyGraph && velocityGraph, "Curve feedback graphs missing");
+    const QVariantList heldNotes{QVariantMap{{"note",60},{"velocity",90},{"outputMask",255}}};
+    emit settings.monitorFeedbackChanged(heldNotes, {});
+    settle();
+    check(keyGraph->property("feedbackNotes").toList().size()==1
+          && velocityGraph->property("feedbackNotes").toList().size()==1,
+          "Played notes did not reach both curve editors");
+    emit settings.monitorFeedbackChanged({}, {});
+    settle();
+    check(keyGraph->property("feedbackNotes").toList().isEmpty()
+          && velocityGraph->property("feedbackNotes").toList().isEmpty(),
+          "Released notes remained on curve editors");
     settings.setCurveControl(0,20,0,127);settle();
     auto* controller=qobject_cast<CurveController*>(settings.keyCurve());
     controller->setPoints(40,100,80,0);settle();
@@ -131,6 +146,38 @@ ApplicationWindow {
       auto* channel=findVisualItem(window->contentItem(),"curveCcChannel"+QString::number(slot));
       check(channel->property("currentIndex").toInt()==slot+3,"Channel combo not synchronized");
     }
+    // The first assigned track owns the automatic name until it leaves.
+    auto* first = qobject_cast<TrackController*>(settings.track(5));
+    auto* second = qobject_cast<TrackController*>(settings.track(2));
+    check(first && second, "Track controllers missing");
+    first->setProgramNumber(40);
+    second->setProgramNumber(41);
+    first->setMorphOutput(0);
+    auto& output = settings.currentPreset().morphOutputs[0];
+    const auto firstName = output.name;
+    check(!firstName.isEmpty() && output.nameTrackIndex == 4 && !output.customName,
+          "First assignment did not establish automatic name");
+    second->setMorphOutput(0);
+    second->setProgramNumber(42);
+    check(output.name == firstName && output.nameTrackIndex == 4,
+          "Second track replaced the first automatic name");
+    first->setProgramNumber(43);
+    check(output.name != firstName, "First track program did not update automatic name");
+    settings.setMorphOutputName(0, "My layered sound");
+    first->setProgramNumber(44);
+    check(output.name == "My layered sound" && output.customName,
+          "Program change replaced custom name");
+    first->setMorphOutput(8);
+    check(output.name == "My layered sound" && output.nameTrackIndex == 1,
+          "Removing owner lost custom name or remaining track");
+    second->setMorphOutput(8);
+    check(output.name.isEmpty() && !output.customName && output.nameTrackIndex == -1,
+          "Empty output retained its previous name");
+    second->setMorphOutput(0);
+    check(!output.name.isEmpty() && !output.customName && output.nameTrackIndex == 1,
+          "Reassignment did not initialize a fresh name");
+    second->reset();
+    check(output.name.isEmpty() && !output.customName, "Track reset left a stale output name");
     // A rapid stream must preserve every bounded delta without replaying every
     // intermediate value through QML. Include reversals after reaching a limit.
     controller->setPoints(40,100,80,0);settle();

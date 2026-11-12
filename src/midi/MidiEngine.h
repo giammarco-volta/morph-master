@@ -113,7 +113,7 @@ public slots:
   void start();
   void stop();
 
-  void setSnapshot(const MidiEngineSnapshot& snapshot);
+  void setSnapshot(const MidiEngineSnapshot& snapshot, int resettingTrack = -1);
 
   void refreshMidiPorts();
 
@@ -121,6 +121,8 @@ public slots:
   void sendTrackProgramChange(int trackIndex, int program);
   void sendTrackBankSelectAndProgram(int trackIndex, int bankMSB, int bankLSB, int program);
   void sendCurrentPresetTrackSetup();
+  void resetTrackSetup(int trackIndex);
+  void sendTrackSetup(int trackIndex);
   void sendRNPFineTuning(int trackIndex, int cents);
 
   void sendGM2Reset();

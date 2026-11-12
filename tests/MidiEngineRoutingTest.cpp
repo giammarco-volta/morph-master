@@ -52,6 +52,36 @@ class MidiEngineRoutingTest {
 public:
   static void run() {
     {
+      MidiEngine engine;
+      auto* output = setup(engine);
+      engine.snapshot_.tracks[7] = TrackPresetData{};
+      output->messages.clear();
+      engine.resetTrackSetup(7);
+      bool program = false, volume = false, pan = false, expression = false;
+      for (const auto& message : output->messages) {
+        check((message.status & 0x0f) == 7, "Track reset affected another MIDI channel");
+        program |= message.status == 0xc7 && message.note == 0;
+        volume |= message.status == 0xb7 && message.note == 7 && message.value == 100;
+        pan |= message.status == 0xb7 && message.note == 10 && message.value == 64;
+        expression |= message.status == 0xb7 && message.note == 11 && message.value == 127;
+      }
+      check(program && volume && pan && expression, "Track reset did not transmit default setup");
+    }
+    {
+      MidiEngine engine;
+      auto* output = setup(engine);
+      engine.snapshot_.velCurve = {49, 100, 113, 0};
+      engine.snapshot_.tracks[2].morphOutput = MorphOutputId::Loud;
+      output->messages.clear();
+      engine.handleIncomingNoteOn(40, 120);
+      bool sentLoud = false;
+      for (const auto& message : output->messages) {
+        if (message.status == 0x92 && message.note == 40 && message.value == 120)
+          sentLoud = true;
+      }
+      check(sentLoud, "Full Loud gain must send a Note On with full input velocity");
+    }
+    {
       MidiEngine e; auto* out=setup(e);
       for (int note : {48,52,55,60,64,67,72}) {
         out->messages.clear(); e.handleIncomingNoteOn(note,90);

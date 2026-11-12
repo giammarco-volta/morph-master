@@ -230,53 +230,6 @@ Item {
         root.curveEdited()
     }
 
-    function firstTrackForOutput(outputId) {
-        if (outputId < 0 || outputId > 7)
-            return 0
-
-        // assignmentRevision intentionally participates in the binding.
-        const unused = root.assignmentRevision
-
-        for (let trackNumber = 1; trackNumber <= 16; ++trackNumber) {
-            const controller = SettingsController.track(trackNumber)
-            if (controller && controller.morphOutput === outputId)
-                return trackNumber
-        }
-
-        return 0
-    }
-
-    function noteOn(note, velocity) {
-        for (let i = 0; i < root.feedbackNotes.length; ++i) {
-            if (root.feedbackNotes[i].note === note) {
-                root.feedbackNotes[i].velocity = velocity
-                canvas.requestPaint()
-                return
-            }
-        }
-
-        root.feedbackNotes.push({
-            note: note,
-            velocity: velocity
-        })
-
-        canvas.requestPaint()
-    }
-
-    function noteOff(note) {
-        let removed = false
-
-        for (let i = root.feedbackNotes.length - 1; i >= 0; --i) {
-            if (root.feedbackNotes[i].note === note) {
-                root.feedbackNotes.splice(i, 1)
-                removed = true
-            }
-        }
-
-        if (removed)
-            canvas.requestPaint()
-    }
-
     TextMetrics {
         id: yLabelMetrics
 
@@ -411,62 +364,6 @@ Item {
             drawHandle(root.x1, root.gainFromWeight(root.y1, false))
             drawHandle(root.x2, root.gainFromWeight(root.y2, false))
 
-            function drawFeedbackMarker(xValue, displayedGain, trackNumber, alpha) {
-                if (trackNumber <= 0 || xValue < root.minX || xValue > root.maxX)
-                    return
-
-                const point = root.curveToPixel(xValue, displayedGain)
-                const radius = 8
-
-                ctx.save()
-                ctx.globalAlpha = alpha
-                ctx.setLineDash([])
-                ctx.fillStyle = "#e53935"
-                ctx.strokeStyle = "#ffffff"
-                ctx.lineWidth = 1
-                ctx.beginPath()
-                ctx.arc(point.x, point.y, radius, 0, Math.PI * 2)
-                ctx.fill()
-                ctx.stroke()
-
-                ctx.fillStyle = "#ffffff"
-                ctx.font = "bold 10px sans-serif"
-                ctx.textAlign = "center"
-                ctx.textBaseline = "middle"
-                ctx.fillText(String(trackNumber), point.x, point.y + 0.5)
-                ctx.restore()
-            }
-
-            const primaryTrack = root.firstTrackForOutput(
-                                     root.primaryMorphOutputId)
-            const complementaryTrack = root.firstTrackForOutput(
-                                           root.complementaryMorphOutputId)
-
-            for (let i = 0; i < root.feedbackNotes.length; ++i) {
-                const noteData = root.feedbackNotes[i]
-                const xValue = root.noteMode
-                             ? noteData.note
-                             : noteData.velocity
-
-                if (primaryTrack > 0) {
-                    drawFeedbackMarker(
-                        xValue,
-                        root.displayedCurveValueAt(
-                            xValue, root.y1, root.y2, false),
-                        primaryTrack,
-                        1.0)
-                }
-
-                if (complementaryTrack > 0) {
-                    drawFeedbackMarker(
-                        xValue,
-                        root.displayedCurveValueAt(
-                            xValue, root.y1, root.y2, true),
-                        complementaryTrack,
-                        1.0)
-                }
-            }
-
             ctx.fillStyle = Theme.text
             ctx.font = Theme.controlFontSize + "px sans-serif"
 
@@ -519,6 +416,41 @@ Item {
         }
     }
 
+    // Keep note feedback separate from the curve canvas so incoming MIDI
+    // does not redraw the editor's grid and curves on every note event.
+    Canvas {
+        id: feedbackCanvas
+        anchors.fill: parent
+
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.clearRect(0, 0, width, height)
+            ctx.fillStyle = "#e53935"
+
+            for (let i = 0; i < root.feedbackNotes.length; ++i) {
+                const noteData = root.feedbackNotes[i]
+                const xValue = Number(root.noteMode ? noteData.note : noteData.velocity)
+                if (!isFinite(xValue) || xValue < root.minX || xValue > root.maxX)
+                    continue
+
+                for (let curve = 0; curve < 2; ++curve) {
+                    const outputId = curve === 0 ? root.primaryMorphOutputId
+                                                 : root.complementaryMorphOutputId
+                    if (outputId < 0 || (noteData.outputMask !== undefined
+                        && !(Number(noteData.outputMask) & (1 << outputId))))
+                        continue
+                    const gain = root.displayedCurveValueAt(xValue, root.y1, root.y2, curve === 1)
+                    const point = root.curveToPixel(xValue, gain)
+                    ctx.beginPath()
+                    ctx.arc(point.x, point.y, 4.5, 0, Math.PI * 2)
+                    ctx.fill()
+                }
+            }
+        }
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+    }
+
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
@@ -563,18 +495,19 @@ Item {
 
     onWidthChanged: root.schedulePaint()
     onHeightChanged: root.schedulePaint()
-    onX1Changed: canvas.requestPaint()
-    onY1Changed: canvas.requestPaint()
-    onX2Changed: canvas.requestPaint()
-    onY2Changed: canvas.requestPaint()
-    onMinXChanged: canvas.requestPaint()
-    onMaxXChanged: canvas.requestPaint()
-    onNoteModeChanged: canvas.requestPaint()
-    onShowXLabelsChanged: canvas.requestPaint()
-    onShowYLabelsChanged: canvas.requestPaint()
+    onFeedbackNotesChanged: feedbackCanvas.requestPaint()
+    onX1Changed: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onY1Changed: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onX2Changed: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onY2Changed: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onMinXChanged: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onMaxXChanged: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onNoteModeChanged: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onShowXLabelsChanged: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
+    onShowYLabelsChanged: { canvas.requestPaint(); feedbackCanvas.requestPaint() }
     onPrimaryMorphOutputIdChanged: canvas.requestPaint()
     onComplementaryMorphOutputIdChanged: canvas.requestPaint()
-    onYLabelRightMarginChanged: root.schedulePaint()
+    onYLabelRightMarginChanged: { root.schedulePaint(); feedbackCanvas.requestPaint() }
 
     Component.onCompleted: {
         root.schedulePaint()

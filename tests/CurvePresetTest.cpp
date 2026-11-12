@@ -26,11 +26,14 @@ int main(int argc,char** argv) {
     PresetData preset; preset.name="Curve test";
     for(int i=0;i<4;++i) preset.curveControls[i]={7,double(10+i),double(90+i),i+2};
     preset.keyCurve.x0=32.25; preset.keyCurve.x1=95.75;
+    preset.morphOutputs[0].nameTrackIndex=4;
+    preset.tracks[4].morphOutput=MorphOutputId::Loud;
     check(manager.savePreset(preset),"Could not save isolated test preset");
     PresetManager loaded;
     check(loaded.loadFromDisk(),"Could not reload preset");
     const auto* restored=loaded.findPreset(preset.name);
     check(restored!=nullptr,"Saved preset missing");
+    check(restored->morphOutputs[0].nameTrackIndex==4,"Automatic name track lost on save");
     check(restored->keyCurve.x0==32.25 && restored->keyCurve.x1==95.75,"Fractional endpoints lost on save");
     for(int i=0;i<4;++i) {
       const auto& a=restored->curveControls[i]; const auto& b=preset.curveControls[i];

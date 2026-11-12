@@ -136,6 +136,7 @@ public:
   int programNumber() const;
   void setProgramNumber(int value);
 
+  Q_INVOKABLE void reset();
   void notifyDataChanged();
 
 signals:
