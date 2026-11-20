@@ -1156,6 +1156,9 @@ QString SettingsController::automaticTrackProgramName(int trackIndex) const
 
   const auto& track = currentPreset_.tracks[trackIndex];
 
+  if (!track.hasProgramSelection)
+    return QStringLiteral("<name>");
+
   if (useInstrumentDefinition())
   {
     if (const InstrumentDefinition* def = currentInstrumentDefinition())
@@ -1216,7 +1219,8 @@ void SettingsController::updateMorphOutputAfterAssignment(int oldOutput, int new
     {
       output.customName = false;
       output.nameTrackIndex = trackIndex;
-      output.name = automaticTrackProgramName(trackIndex).trimmed().left(40);
+      // Assignment only routes MIDI; it does not select a program on the device.
+      output.name = QStringLiteral("<name>");
     }
   }
   if (morphOutputStateModel_)

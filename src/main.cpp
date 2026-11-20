@@ -1,10 +1,12 @@
-#include <QApplication>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include "LicenseAccess.h"
 #include <QDebug>
 #include <QDir>
 #include <QQuickStyle>
 #include <QQmlContext>
 #include <QTimer>
+#include "StoreScreenshot.h"
 
 #include "controllers/SettingsController.h"
 
@@ -53,7 +55,7 @@ int main(int argc, char* argv[])
   qputenv("QSG_RHI_BACKEND", "opengl");
 #endif
 
-  QApplication app(argc, argv);
+  QGuiApplication app(argc, argv);
 
   QQuickStyle::setStyle("Material");
 
@@ -61,9 +63,15 @@ int main(int argc, char* argv[])
   QCoreApplication::setOrganizationDomain("naadalab.com");
   QCoreApplication::setApplicationName("Morphora");
 
+  NaadaLab::LicenseAccess licenseAccess;
   SettingsController settingsController;
+  QObject::connect(&licenseAccess, &NaadaLab::LicenseAccess::accessGranted,
+    &settingsController, &SettingsController::delayedMidiRefreshAfterStartup);
 
   QQmlApplicationEngine engine;
+  StoreScreenshot storeScreenshot;
+  engine.rootContext()->setContextProperty("StoreScreenshot", &storeScreenshot);
+  engine.rootContext()->setContextProperty("LicenseAccess", &licenseAccess);
   engine.rootContext()->setContextProperty("SettingsController", &settingsController);
 
 #ifdef NDEBUG

@@ -241,7 +241,7 @@ ColumnLayout {
 
         bankMsbField.value = root.track.bankMSB
         bankLsbField.value = root.track.bankLSB
-        manualProgramCombo.currentIndex = root.track.programNumber
+        manualProgramCombo.currentIndex = root.track.hasProgramSelection ? root.track.programNumber : -1
 
         footageCombo.currentIndex = root.track.footage
         detuneOffsetField.value = root.track.detuneOffset
@@ -598,7 +598,7 @@ ColumnLayout {
                 enabled: instrumentProgramSelector.enabled
                 font.pixelSize: Theme.controlFontSize
                 model: [root.track ? root.track.instrumentProgramDisplayName : ""]
-                currentIndex: 0
+                currentIndex: root.track && root.track.hasProgramSelection ? 0 : -1
 
                 // Keep the native ComboBox appearance, including its indicator,
                 // but route interaction to the searchable modal browser.
@@ -629,7 +629,7 @@ ColumnLayout {
             enabled: root.trackAssigned
             opacity: enabled ? 1.0 : 0.45
 
-            onCurrentIndexChanged: {
+            onActivated: {
                 if (root.updatingFromModel ||
                     SettingsController.useInstrumentDefinition ||
                     !root.track ||
@@ -637,7 +637,7 @@ ColumnLayout {
                     return
                 }
 
-                if (root.track.programNumber !== currentIndex)
+                if (!root.track.hasProgramSelection || root.track.programNumber !== currentIndex)
                     root.track.programNumber = currentIndex
             }
         }

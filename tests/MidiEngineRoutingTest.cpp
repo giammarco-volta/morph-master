@@ -65,7 +65,14 @@ public:
         pan |= message.status == 0xb7 && message.note == 10 && message.value == 64;
         expression |= message.status == 0xb7 && message.note == 11 && message.value == 127;
       }
-      check(program && volume && pan && expression, "Track reset did not transmit default setup");
+      check(!program && volume && pan && expression, "Track without a selection sent a default program");
+      engine.snapshot_.tracks[7].hasProgramSelection = true;
+      output->messages.clear();
+      engine.sendTrackSetup(7);
+      program = false;
+      for (const auto& message : output->messages)
+        program |= message.status == 0xc7 && message.note == 0;
+      check(program, "Explicit Program 1 was not sent in track setup");
     }
     {
       MidiEngine engine;

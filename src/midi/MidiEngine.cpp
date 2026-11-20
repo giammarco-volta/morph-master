@@ -1488,8 +1488,9 @@ void MidiEngine::sendTrackSetup(int trackIndex)
   if (trackIndex < 0 || trackIndex >= 16 || !openCurrentMidiOut(false))
     return;
   const auto& track = snapshot_.tracks[trackIndex];
-  sendTrackBankSelectAndProgram(trackIndex, track.program_cc0,
-                                track.program_cc32, track.program_number);
+  if (track.hasProgramSelection)
+    sendTrackBankSelectAndProgram(trackIndex, track.program_cc0,
+                                  track.program_cc32, track.program_number);
   sendTrackControlChange(trackIndex, 7, track.volume);
   sendTrackControlChange(trackIndex, 10, std::clamp(int(track.panorama) + 64, 0, 127));
   sendTrackControlChange(trackIndex, 91, track.reverb);

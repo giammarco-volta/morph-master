@@ -505,7 +505,7 @@ Rectangle {
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1.25
 
-                title: "MORPHMASTER"
+                title: "MORPHORA"
                 iconKind: "surface"
                 configured: true
                 primaryText: root.processingSummary

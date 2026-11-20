@@ -1,0 +1,8 @@
+{
+    "endpoint": "https://api.naadalab.com/index.php",
+    "cloudProjectNumber": 551932735218,
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEArx6GZRa6vkveWgbhJben\nO97n1ob/k+tV4BHYJ/OkBe/2vPNLnvZw7EtwSLzBUCMgLUXaCwLu0nZ8XvilFmUh\ngVK1ObhBpC2JR1H0uGDvZDeJOkm3YaxQ+CqGIBoBAy+BQX0cij5vb7gvpK6QYWQa\nFL+B8kxMQBnTsIz7vFgN+b84tFJcMzE/9iu9s1DF9ENYux0W6tHgHKztzvh2qHJw\nkiJP3J1+mxDhWDhYhK+NrFpapMS/BnfzvP08bj7RDoKCkh/NdUbF5HKt2DhQe33q\nqmEDapP2CXv+CGsjr0Qr3RztxGEyiv4Kl8u2XQwDPWE9daOqLnVghK58FMFNKs+W\n2FKiLiKmCm2glp3rymOIGD2B46pPUaDxZTLXWVyuXKOJL5jO8pmTuZNsEt2YJOx0\nOYcYIjU/8ihZiVKr1b44m0f6K/tFCOdYfIPlzMXxYf3rsdRIPEBbyL9s2PQz97Om\nTM2Jo+iWcslZqkUMtCtk3faq0XXkmu615D6ZP9AJ1n39AgMBAAE=\n-----END PUBLIC KEY-----\n",
+    "productId": "full_version",
+    "privacyUrl": "https://api.naadalab.com/privacy.html",
+    "reviewPublicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEk3QBbEG/HexFliLcgzLaKW5YEWSW\ngiCs+/SLHIjG3MAP25X5215+fbD8H/etSLM1d9c9S8NTRyWRWfA4b31uvw==\n-----END PUBLIC KEY-----\n"
+}

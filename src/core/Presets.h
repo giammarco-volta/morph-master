@@ -27,6 +27,7 @@ struct TrackPresetData
   uint8_t program_cc0 = 0;
   uint8_t program_cc32 = 0;
   uint8_t program_number = 0;
+  bool hasProgramSelection = false;
   uint8_t volume = 100;
   int8_t  panorama = 0;
   uint8_t reverb = 40;

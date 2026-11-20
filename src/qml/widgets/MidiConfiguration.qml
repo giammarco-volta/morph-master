@@ -148,6 +148,7 @@ SharedUi.FormSection {
                 SettingsController.sendGM2Reset()
             }
         }
+
     }
 
     Component {

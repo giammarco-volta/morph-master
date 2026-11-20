@@ -70,6 +70,9 @@ class TrackController : public QObject
     READ instrumentProgramDisplayName
     NOTIFY instrumentProgramDisplayNameChanged)
 
+  Q_PROPERTY(bool hasProgramSelection READ hasProgramSelection
+    NOTIFY instrumentProgramDisplayNameChanged)
+
   Q_PROPERTY(int bankMSB
     READ bankMSB
     WRITE setBankMSB
@@ -123,6 +126,7 @@ public:
   // Case Instrument definition
   int instrumentProgramCount() const;
   QString instrumentProgramDisplayName() const;
+  bool hasProgramSelection() const;
   Q_INVOKABLE QVariantList findInstrumentPrograms(const QString& nameFilter, int programNumber) const;
   Q_INVOKABLE void selectInstrumentProgram(int bankMSB, int bankLSB, int programNumber);
 

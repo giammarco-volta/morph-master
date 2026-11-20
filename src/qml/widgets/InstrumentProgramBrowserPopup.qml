@@ -60,6 +60,7 @@ Rectangle {
 
     function isCurrentProgram(programData) {
         return track
+                && track.hasProgramSelection
                 && programData.msb === track.bankMSB
                 && programData.lsb === track.bankLSB
                 && programData.programNumber === track.programNumber

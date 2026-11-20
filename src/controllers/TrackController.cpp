@@ -391,11 +391,18 @@ QVariantList TrackController::findInstrumentPrograms(const QString& nameFilter, 
 }
 
 //------------------------------------------------------
+bool TrackController::hasProgramSelection() const
+{
+  return settingsController_.currentPreset().tracks[trackIndex_].hasProgramSelection;
+}
+
 QString TrackController::instrumentProgramDisplayName() const
 //------------------------------------------------------
 {
   const InstrumentDefinition* def = settingsController_.currentInstrumentDefinition();
   const auto& track = settingsController_.currentPreset().tracks[trackIndex_];
+  if (!track.hasProgramSelection)
+    return {};
   if (def)
   {
     for (const ProgramEntry& program : def->programs)
@@ -418,11 +425,13 @@ void TrackController::selectInstrumentProgram(int bankMSB, int bankLSB, int prog
   const bool cc0Changed = track.program_cc0 != newCc0;
   const bool cc32Changed = track.program_cc32 != newCc32;
   const bool programChanged = track.program_number != newProgram;
-  if (!cc0Changed && !cc32Changed && !programChanged)
+  if (track.hasProgramSelection && !cc0Changed && !cc32Changed && !programChanged)
     return;
   track.program_cc0 = newCc0;
   track.program_cc32 = newCc32;
   track.program_number = newProgram;
+  track.hasProgramSelection = true;
+  settingsController_.notifyMidiRelevantStateChanged();
   settingsController_.sendTrackBankSelectAndProgram(trackIndex_, track.program_cc0, track.program_cc32, track.program_number);
   settingsController_.updateMorphOutputProgramName(trackIndex_);
   emit instrumentProgramDisplayNameChanged();
@@ -499,10 +508,12 @@ void TrackController::setProgramNumber(int value)
 
   const auto newValue = static_cast<uint8_t>(std::clamp(value, 0, 127));
 
-  if (track.program_number == newValue)
+  if (track.hasProgramSelection && track.program_number == newValue)
     return;
 
   track.program_number = newValue;
+  track.hasProgramSelection = true;
+  settingsController_.notifyMidiRelevantStateChanged();
 
   settingsController_.sendTrackBankSelectAndProgram(trackIndex_, track.program_cc0, track.program_cc32, track.program_number);
 

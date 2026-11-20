@@ -150,6 +150,15 @@ ApplicationWindow {
     auto* first = qobject_cast<TrackController*>(settings.track(5));
     auto* second = qobject_cast<TrackController*>(settings.track(2));
     check(first && second, "Track controllers missing");
+    first->reset();
+    check(!first->hasProgramSelection() && first->instrumentProgramDisplayName().isEmpty(),
+          "Fresh track displayed an unselected program");
+    first->selectInstrumentProgram(0, 0, 0);
+    check(first->hasProgramSelection() && !first->instrumentProgramDisplayName().isEmpty(),
+          "First explicit selection of Program 1 was ignored");
+    first->reset();
+    first->setProgramNumber(0);
+    check(first->hasProgramSelection(), "First manual selection of Program 1 was ignored");
     first->setProgramNumber(40);
     second->setProgramNumber(41);
     first->setMorphOutput(0);

@@ -50,6 +50,8 @@ const char* aboutHTML = R"(
                           parameters are continuously blended according to the performer's playing.
                           </p>
 
+                          <p><b>Recommended device:</b> On Android, a tablet is recommended for setup and live performance, with more space for controls and monitoring. Phones are also supported for exploring the app and performing with setups that require less on-screen interaction.</p>
+
                           <h2>Main Features</h2>
 
                           <ul>
@@ -69,7 +71,6 @@ const char* aboutHTML = R"(
                               <b>User Manual:</b>
                               <a href="morphmaster:user-manual">open user manual</a>
                           </p>
-                          <p><b>Video Tutorials:</b> <i>work in progress</i></p>
 
                           <h2>Website</h2>
                             <p>

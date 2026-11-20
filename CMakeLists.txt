@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS
   Core
   Gui
-  Widgets
   Concurrent
   Svg
   Qml
@@ -32,6 +31,7 @@ endif()
 
 set(MORPHMASTER_SOURCES
   src/main.cpp
+  src/StoreScreenshot.h
   src/About.h
 
   src/core/ExpressionCalculator.h
@@ -65,10 +65,6 @@ set(MORPHMASTER_SOURCES
 )
 
 if(ANDROID)
-  set(QT_ANDROID_COMPILE_SDK_VERSION 34)
-  set(QT_ANDROID_MIN_SDK_VERSION 23)
-  set(QT_ANDROID_TARGET_SDK_VERSION 34)
-  
   qt_add_executable(MorphMaster
     MANUAL_FINALIZATION
     ${MORPHMASTER_SOURCES}
@@ -99,6 +95,7 @@ qt_add_qml_module(MorphMaster
     src/qml/pages/UserManualPage.qml
 
     src/qml/widgets/MidiConfiguration.qml
+    src/qml/widgets/SplashScreen.qml
     src/qml/widgets/PerformanceSettings.qml
     src/qml/widgets/PresetSelector.qml
     src/qml/widgets/ConfigurationNode.qml
@@ -152,9 +149,15 @@ foreach(manual_image ${MANUAL_IMAGE_FILES})
   )
 endforeach()
 
+set_source_files_properties(
+  src/resources/MorphoraSplash.png
+  PROPERTIES QT_RESOURCE_ALIAS "MorphoraSplash.png"
+)
+
 qt_add_resources(MorphMaster MorphMasterDataResources
   PREFIX "/"
   FILES
+    src/resources/MorphoraSplash.png
     src/resources/qdarkstyle/darkstyle.qss
     src/resources/Ins/instrument_database.json
     src/resources/manual/MorphoraUserManual.html
@@ -172,7 +175,6 @@ target_link_libraries(MorphMaster PRIVATE
   NaadaLab::Ui
   NaadaLab::Manual
   Qt6::Concurrent
-  Qt6::Widgets
   Qt6::Svg
   Qt6::Qml
   Qt6::Quick
@@ -184,18 +186,42 @@ if(WIN32)
 endif()
 
 if(ANDROID)
-  set_property(TARGET MorphMaster PROPERTY
-     QT_ANDROID_PACKAGE_SOURCE_DIR
-     "${CMAKE_CURRENT_SOURCE_DIR}/android"
+  naadalab_configure_android_midi_package(
+    MorphMaster
+    "${CMAKE_CURRENT_SOURCE_DIR}/android"
   )
 
   set_property(TARGET MorphMaster PROPERTY
      QT_ANDROID_PACKAGE_NAME
-     "com.naadalab.morphmaster"
+     "com.naadalab.morphora"
+  )
+
+  set_target_properties(MorphMaster PROPERTIES
+    QT_ANDROID_COMPILE_SDK_VERSION 36
+    QT_ANDROID_MIN_SDK_VERSION 28
+    QT_ANDROID_TARGET_SDK_VERSION 36
+    QT_ANDROID_SDK_BUILD_TOOLS_REVISION "36.0.0"
+    QT_ANDROID_VERSION_NAME "1.0.0"
+    QT_ANDROID_VERSION_CODE 4
   )
 endif()
 
 qt_finalize_executable(MorphMaster)
+
+# Make the Windows build runnable from Explorer, outside an IDE's Qt PATH.
+if(WIN32 AND NOT ANDROID)
+  find_program(MORPHORA_WINDEPLOYQT windeployqt
+    HINTS "${Qt6_DIR}/../../../bin" REQUIRED)
+  add_custom_target(deploy-windows
+    COMMAND "${MORPHORA_WINDEPLOYQT}"
+      --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/src"
+      --qmlimport "${CMAKE_CURRENT_BINARY_DIR}/external/Common/src/qml"
+      "$<TARGET_FILE:MorphMaster>"
+    DEPENDS MorphMaster
+    COMMENT "Deploying Qt runtime for standalone Windows launch"
+    VERBATIM
+  )
+endif()
 
 option(MORPHORA_BUILD_TESTS "Build MIDI routing regression tests" OFF)
 if(MORPHORA_BUILD_TESTS)

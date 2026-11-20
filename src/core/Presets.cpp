@@ -62,6 +62,7 @@ namespace
     obj["program_cc0"] = static_cast<int>(t.program_cc0);
     obj["program_cc32"] = static_cast<int>(t.program_cc32);
     obj["program_number"] = static_cast<int>(t.program_number);
+    obj["hasProgramSelection"] = t.hasProgramSelection;
 
     obj["panorama"] = static_cast<int>(t.panorama);
     obj["volume"] = static_cast<int>(t.volume);
@@ -90,6 +91,8 @@ namespace
     t.program_cc0 = static_cast<uint8_t>(obj.value("program_cc0").toInt(0));
     t.program_cc32 = static_cast<uint8_t>(obj.value("program_cc32").toInt(0));
     t.program_number = static_cast<uint8_t>(obj.value("program_number").toInt(0));
+    // Older presets always stored a program and sent it when recalled.
+    t.hasProgramSelection = obj.value("hasProgramSelection").toBool(true);
 
     t.panorama = static_cast<int8_t>(obj.value("panorama").toInt(0));
     t.volume = static_cast<uint8_t>(obj.value("volume").toInt(100));

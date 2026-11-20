@@ -24,6 +24,7 @@ int main(int argc,char** argv) {
   try {
     PresetManager manager;
     PresetData preset; preset.name="Curve test";
+    preset.tracks[1].hasProgramSelection = true;
     for(int i=0;i<4;++i) preset.curveControls[i]={7,double(10+i),double(90+i),i+2};
     preset.keyCurve.x0=32.25; preset.keyCurve.x1=95.75;
     preset.morphOutputs[0].nameTrackIndex=4;
@@ -33,6 +34,8 @@ int main(int argc,char** argv) {
     check(loaded.loadFromDisk(),"Could not reload preset");
     const auto* restored=loaded.findPreset(preset.name);
     check(restored!=nullptr,"Saved preset missing");
+    check(!restored->tracks[0].hasProgramSelection && restored->tracks[1].hasProgramSelection,
+          "Empty selection and explicit Program 1 did not survive preset reload");
     check(restored->morphOutputs[0].nameTrackIndex==4,"Automatic name track lost on save");
     check(restored->keyCurve.x0==32.25 && restored->keyCurve.x1==95.75,"Fractional endpoints lost on save");
     for(int i=0;i<4;++i) {
@@ -43,6 +46,13 @@ int main(int argc,char** argv) {
     auto root=QJsonDocument::fromJson(file.readAll()).object(); file.close();
     auto saved=root["presets"].toArray()[0].toObject();
     saved.remove("curveControls");
+    auto legacyTracks = saved["tracks"].toArray();
+    for (int i = 0; i < legacyTracks.size(); ++i) {
+      auto track = legacyTracks[i].toObject();
+      track.remove("hasProgramSelection");
+      legacyTracks[i] = track;
+    }
+    saved["tracks"] = legacyTracks;
     auto oldSettings=saved["appInitSettings"].toObject();
     oldSettings["followExtremeNotes"]=true; saved["appInitSettings"]=oldSettings;
     auto oldOutputs=saved["morphOutputs"].toArray();
@@ -53,6 +63,7 @@ int main(int argc,char** argv) {
     file.write(QJsonDocument(root).toJson()); file.close();
     check(loaded.loadFromDisk(),"Legacy preset failed to load");
     restored=loaded.findPreset(preset.name);
+    check(restored->tracks[0].hasProgramSelection, "Legacy program selection was lost");
     for(const auto& a:restored->curveControls) check(a.cc==-1,"Legacy preset must default to None");
     check(loaded.saveToDisk(),"Could not migrate legacy preset");
     check(file.open(QIODevice::ReadOnly),"Could not inspect migrated preset");

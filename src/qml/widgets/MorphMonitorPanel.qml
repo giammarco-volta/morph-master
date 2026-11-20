@@ -211,6 +211,17 @@ Rectangle {
             readOnly: !root.editingSpecificName
             selectByMouse: true
             maximumLength: 40
+            rightPadding: multipleTracksSuffix.visible ? multipleTracksSuffix.implicitWidth + 4 : 4
+            Text {
+                id: multipleTracksSuffix
+                anchors.right: parent.right
+                anchors.rightMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.trackNumbers.length > 1 && root.specificName !== "<name>" && !root.editingSpecificName
+                text: " ..."
+                font: outputNameEditor.font
+                color: outputNameEditor.color
+            }
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
             topPadding: 0
