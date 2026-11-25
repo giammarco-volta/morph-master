@@ -1,6 +1,7 @@
 #include <QtConcurrent>
 #include <QDebug>
 #include <QSettings>
+#include <map>
 #include <QTimer>
 #include <QThread>
 #include <QMetaObject>
@@ -174,6 +175,30 @@ SettingsController::SettingsController(QObject* parent) : QObject(parent)
     morphOutputGains_.append(0.0);
 
   loadAppInitSettings();
+  QSettings listSettings;
+  listSettings.beginGroup("presetList");
+  presetList_ = listSettings.value("items").toStringList();
+  presetControl_.enabled = listSettings.value("controlEnabled", false).toBool();
+  presetControl_.channel = std::clamp(listSettings.value("controlChannel", midiInChannel()).toInt(), 0, 15);
+  listSettings.setValue("controlChannel", presetControl_.channel);
+  controlSameAsInput_ = listSettings.value("controlSameAsInput", false).toBool();
+  connect(this, &SettingsController::midiInChannelChanged, this, [this]() {
+    if (controlSameAsInput_) emit controlBindingChanged();
+  });
+  presetControl_.source = std::clamp(listSettings.value("controlSource", 0).toInt(), 0, 123);
+  presetControl_.action = std::clamp(listSettings.value("controlAction", 0).toInt(), 0, 1);
+  presetControl_.threshold = std::clamp(listSettings.value("controlThreshold", 10).toInt(), 1, 127);
+  connect(this, &SettingsController::currentPresetNameChanged, this, [this]() {
+    if (presetListIndex_ >= 0 && presetListIndex_ < presetList_.size()
+        && presetList_[presetListIndex_] == currentPresetName()) return;
+    presetListIndex_ = presetList_.indexOf(currentPresetName());
+    emit presetListIndexChanged();
+  });
+  connect(this, &SettingsController::presetNamesChanged, this, [this]() {
+    const auto names = presetNames();
+    for (int i = presetList_.size() - 1; i >= 0; --i)
+      if (!names.contains(presetList_[i])) removeFromPresetList(i);
+  });
 
   connect(&presetManager_, &PresetManager::presetsChanged, this, [this]()
                                                                  {
@@ -237,6 +262,8 @@ void SettingsController::startMidiEngine()
 
   midiEngine_ = new MidiEngine;
   midiEngine_->moveToThread(midiThread_);
+  connect(midiEngine_, &MidiEngine::presetStepRequested, this,
+          &SettingsController::stepPresetList);
 
   connect(midiThread_, &QThread::started, midiEngine_, &MidiEngine::start);
   connect(midiThread_, &QThread::finished, midiEngine_, &QObject::deleteLater);
@@ -355,6 +382,8 @@ MidiEngineSnapshot SettingsController::makeMidiEngineSnapshot() const
 //-------------------------------------------------------------------
 {
   MidiEngineSnapshot s;
+  s.presetControl = presetControl_;
+  s.presetControl.channel = controlChannel();
 
   const auto& app = currentPreset_.appInitSettings;
 
@@ -1539,10 +1568,12 @@ void SettingsController::setSurfaceMorphOutputTrackMask(int morphOutputIndex, in
 void SettingsController::sendGM2Reset()
 //-------------------------------------
 {
-  if (!midiEngine_)
-    return;
+  if (midiEngine_)
+    QMetaObject::invokeMethod(midiEngine_, &MidiEngine::sendGM2Reset, Qt::QueuedConnection);
 
-  QMetaObject::invokeMethod(midiEngine_, &MidiEngine::sendGM2Reset, Qt::QueuedConnection);
+  // Match the per-track Reset action, including assignments and program selection.
+  for (int trackIndex = 0; trackIndex < static_cast<int>(currentPreset_.tracks.size()); ++trackIndex)
+    resetTrack(trackIndex);
 }
 
 //-------------------------------------------------
@@ -1886,4 +1917,122 @@ QVariantList SettingsController::userManualBlocks() const
   return NaadaLab::ManualDocumentParser::loadFromResource(
     QStringLiteral(":/manual/MorphoraUserManual.html"),
     QStringLiteral("qrc:/manual/"));
+}
+
+QStringList SettingsController::controlSources()
+{
+  QStringList result{tr("Channel aftertouch"), tr("Polyphonic aftertouch"),
+    tr("Pitch bend up"), tr("Pitch bend down")};
+  const std::map<int, QString> names{
+    {0, tr("Bank select")}, {1, tr("Modulation wheel")}, {2, tr("Breath controller")},
+    {4, tr("Foot controller")}, {5, tr("Portamento time")}, {7, tr("Volume")},
+    {10, tr("Pan")}, {11, tr("Expression / expression pedal")},
+    {12, tr("Effect control 1")}, {13, tr("Effect control 2")},
+    {16, tr("General purpose 1")}, {17, tr("General purpose 2")},
+    {18, tr("General purpose 3")}, {19, tr("General purpose 4")},
+    {64, tr("Sustain pedal")}, {65, tr("Portamento switch")},
+    {66, tr("Sostenuto pedal")}, {67, tr("Soft pedal")}, {68, tr("Legato switch")},
+    {69, tr("Hold 2")}, {70, tr("Sound variation")}, {71, tr("Resonance")},
+    {72, tr("Release time")}, {73, tr("Attack time")}, {74, tr("Brightness")},
+    {80, tr("General purpose 5")}, {81, tr("General purpose 6")},
+    {82, tr("General purpose 7")}, {83, tr("General purpose 8")},
+    {84, tr("Portamento control")}, {91, tr("Reverb depth")}, {93, tr("Chorus depth")}};
+  for (int cc = 0; cc < 120; ++cc) {
+    const auto it = names.find(cc);
+    result.append(it == names.end() ? tr("CC %1").arg(cc)
+      : tr("%1 (CC %2)").arg(it->second).arg(cc));
+  }
+  return result;
+}
+
+
+void SettingsController::savePresetListSettings()
+{
+  QSettings settings;
+  settings.beginGroup("presetList");
+  settings.setValue("items", presetList_);
+  settings.setValue("controlEnabled", presetControl_.enabled);
+  settings.setValue("controlChannel", presetControl_.channel);
+  settings.setValue("controlSameAsInput", controlSameAsInput_);
+  settings.setValue("controlSource", presetControl_.source);
+  settings.setValue("controlAction", presetControl_.action);
+  settings.setValue("controlThreshold", presetControl_.threshold);
+}
+void SettingsController::setControlEnabled(bool enabled)
+{
+  if (presetControl_.enabled == enabled) return;
+  presetControl_.enabled = enabled;
+  savePresetListSettings(); syncMidiEngineSnapshot(); emit controlBindingChanged();
+}
+void SettingsController::setControlSameAsInput(bool enabled)
+{
+  if (controlSameAsInput_ == enabled) return;
+  controlSameAsInput_ = enabled;
+  savePresetListSettings(); syncMidiEngineSnapshot(); emit controlBindingChanged();
+}
+void SettingsController::setControlChannel(int channel)
+{
+  if (controlSameAsInput_ || channel < 0 || channel > 15 || channel == presetControl_.channel) return;
+  presetControl_.channel = channel;
+  savePresetListSettings(); syncMidiEngineSnapshot(); emit controlBindingChanged();
+}
+void SettingsController::setControlSource(int source)
+{
+  if (source < 0 || source >= 124 || source == presetControl_.source) return;
+  presetControl_.source = source;
+  savePresetListSettings(); syncMidiEngineSnapshot(); emit controlBindingChanged();
+}
+void SettingsController::setControlAction(int action)
+{
+  if (action < 0 || action > 1 || action == presetControl_.action) return;
+  presetControl_.action = action;
+  savePresetListSettings(); syncMidiEngineSnapshot(); emit controlBindingChanged();
+}
+void SettingsController::setControlThreshold(int threshold)
+{
+  if (threshold < 1 || threshold > 127 || threshold == presetControl_.threshold) return;
+  presetControl_.threshold = threshold;
+  savePresetListSettings(); syncMidiEngineSnapshot(); emit controlBindingChanged();
+}
+void SettingsController::addToPresetList(const QString& name)
+{
+  if (!presetManager_.contains(name)) return;
+  presetList_.append(name);
+  savePresetListSettings(); emit presetListChanged();
+}
+void SettingsController::removeFromPresetList(int index)
+{
+  if (index < 0 || index >= presetList_.size()) return;
+  presetList_.removeAt(index);
+  if (presetListIndex_ == index) presetListIndex_ = -1;
+  else if (presetListIndex_ > index) --presetListIndex_;
+  savePresetListSettings(); emit presetListChanged(); emit presetListIndexChanged();
+}
+void SettingsController::movePresetListItem(int from, int to)
+{
+  if (from < 0 || to < 0 || from >= presetList_.size() || to >= presetList_.size() || from == to) return;
+  presetList_.move(from, to);
+  if (presetListIndex_ == from) presetListIndex_ = to;
+  else if (from < presetListIndex_ && to >= presetListIndex_) --presetListIndex_;
+  else if (from > presetListIndex_ && to <= presetListIndex_) ++presetListIndex_;
+  savePresetListSettings(); emit presetListChanged(); emit presetListIndexChanged();
+}
+void SettingsController::recallPresetListItem(int index)
+{
+  if (index < 0 || index >= presetList_.size()) return;
+  const auto* preset = presetManager_.findPreset(presetList_[index]);
+  if (!preset) return;
+  // Always recall the saved state, including a repeated entry in the set list.
+  currentPresetIndex_ = presetNames().indexOf(presetList_[index]);
+  presetListIndex_ = index;
+  applyPreset(*preset);
+  emit currentPresetIndexChanged(); emit presetListIndexChanged();
+}
+void SettingsController::stepPresetList(int direction)
+{
+  if (direction != -1 && direction != 1) return;
+  const int next = presetListIndex_ < 0
+      ? (direction > 0 ? 0 : presetList_.size() - 1)
+      : presetListIndex_ + direction;
+  recallPresetListItem(next);
 }

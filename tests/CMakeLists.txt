@@ -22,3 +22,6 @@ add_test(NAME CurveUiTests COMMAND CurveUiTests)
 get_target_property(CURVE_UI_QT_CORE Qt6::Core IMPORTED_LOCATION_DEBUG)
 get_filename_component(CURVE_UI_QT_BIN "${CURVE_UI_QT_CORE}" DIRECTORY)
 set_tests_properties(CurveUiTests PROPERTIES TIMEOUT 30 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QPA_PLATFORM_PLUGIN_PATH=${CURVE_UI_QT_BIN}/../plugins/platforms")
+
+add_executable(MidiControlBindingTests MidiControlBindingTest.cpp)
+add_test(NAME MidiControlBindingTests COMMAND MidiControlBindingTests)

@@ -10,6 +10,7 @@
 
 #include "../core/InstrumentDatabase.h"
 #include "../core/Presets.h"
+#include "../core/MidiControlBinding.h"
 
 #include <memory>
 
@@ -133,6 +134,15 @@ class SettingsController : public QObject
     READ morphOutputStateModel
     CONSTANT)
 
+  Q_PROPERTY(QStringList presetList READ presetList NOTIFY presetListChanged)
+  Q_PROPERTY(int presetListIndex READ presetListIndex NOTIFY presetListIndexChanged)
+  Q_PROPERTY(QStringList controlSources READ controlSources CONSTANT)
+  Q_PROPERTY(bool controlEnabled READ controlEnabled WRITE setControlEnabled NOTIFY controlBindingChanged)
+  Q_PROPERTY(bool controlSameAsInput READ controlSameAsInput WRITE setControlSameAsInput NOTIFY controlBindingChanged)
+  Q_PROPERTY(int controlChannel READ controlChannel WRITE setControlChannel NOTIFY controlBindingChanged)
+  Q_PROPERTY(int controlSource READ controlSource WRITE setControlSource NOTIFY controlBindingChanged)
+  Q_PROPERTY(int controlAction READ controlAction WRITE setControlAction NOTIFY controlBindingChanged)
+  Q_PROPERTY(int controlThreshold READ controlThreshold WRITE setControlThreshold NOTIFY controlBindingChanged)
   Q_PROPERTY(QStringList presetNames
     READ presetNames
     NOTIFY presetNamesChanged)
@@ -236,6 +246,26 @@ public:
 
   void notifyMidiRelevantStateChanged();
   void resetTrack(int trackIndex);
+  QStringList presetList() const { return presetList_; }
+  int presetListIndex() const { return presetListIndex_; }
+  static QStringList controlSources();
+  bool controlEnabled() const { return presetControl_.enabled; }
+  bool controlSameAsInput() const { return controlSameAsInput_; }
+  void setControlSameAsInput(bool enabled);
+  int controlChannel() const { return controlSameAsInput_ ? midiInChannel() : presetControl_.channel; }
+  void setControlChannel(int channel);
+  int controlSource() const { return presetControl_.source; }
+  int controlAction() const { return presetControl_.action; }
+  int controlThreshold() const { return presetControl_.threshold; }
+  void setControlEnabled(bool enabled);
+  void setControlSource(int source);
+  void setControlAction(int action);
+  void setControlThreshold(int threshold);
+  Q_INVOKABLE void addToPresetList(const QString& name);
+  Q_INVOKABLE void removeFromPresetList(int index);
+  Q_INVOKABLE void movePresetListItem(int from, int to);
+  Q_INVOKABLE void recallPresetListItem(int index);
+  Q_INVOKABLE void stepPresetList(int direction);
   QStringList presetNames() const;
   Q_INVOKABLE QStringList findPresetNames(const QString& nameFilter) const;
 
@@ -312,6 +342,9 @@ signals:
   void morphOutputMuteSoloChanged();
   void monitorFeedbackChanged(QVariantList notes, QVariantList gains);
   void midiInputReceivedWithNoAssignedTracks();
+  void presetListChanged();
+  void presetListIndexChanged();
+  void controlBindingChanged();
   void presetNamesChanged();
   void currentPresetIndexChanged();
   void currentPresetNameChanged();
@@ -344,6 +377,11 @@ private:
   QVariantList morphOutputGains_;
   QVariantList monitorFeedbackNotes_;
 
+  void savePresetListSettings();
+  QStringList presetList_;
+  int presetListIndex_ = -1;
+  bool controlSameAsInput_ = false;
+  Morphora::MidiControlBinding presetControl_;
   PresetManager presetManager_;
   int currentPresetIndex_ = -1;
 };

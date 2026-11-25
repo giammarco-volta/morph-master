@@ -16,6 +16,9 @@ Popup {
     dim: false
     focus: true
     closePolicy: Popup.CloseOnEscape
+    // The first frame must fully cover the underlying page.
+    enter: null
+    exit: null
 
     property bool presentationMode: false
     // Exposed so the component can also be previewed outside the application.
@@ -47,7 +50,7 @@ Popup {
             anchors.fill: parent
             source: root.imageSource
             fillMode: Image.PreserveAspectFit
-            asynchronous: true
+            asynchronous: false
             smooth: true
             onStatusChanged: root.startAutoCloseWhenReady()
         }

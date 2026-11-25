@@ -51,7 +51,8 @@ ApplicationWindow {
         function copySupportReference() { return false }
     }
 	color: SharedUi.Theme.background
-    visible: true
+    // Prepare the splash before exposing the first application frame.
+    visible: false
     title: "Morphora"
 	font.family: "Arial"
 
@@ -182,6 +183,7 @@ ApplicationWindow {
         if (viewportSimulationEnabled)
             applyViewportProfile()
         introduction.open()
+        root.visible = true
     }
 
     SplashScreen {

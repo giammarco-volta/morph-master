@@ -158,17 +158,8 @@ void MidiEngine::start()
   MidiIn_MonoInterpreter::Configuration midiInConfiguration;
   midiInConfiguration.ignoreProgramChanges = true;
   midiInConfiguration.forwardOffChannelControlChanges = true;
+  midiInConfiguration.forwardOffChannelMessages = true;
 
-  midiInConfiguration.ignoredControlChanges.set(0);
-  midiInConfiguration.ignoredControlChanges.set(6);
-  midiInConfiguration.ignoredControlChanges.set(32);
-  midiInConfiguration.ignoredControlChanges.set(38);
-  midiInConfiguration.ignoredControlChanges.set(96);
-  midiInConfiguration.ignoredControlChanges.set(97);
-  midiInConfiguration.ignoredControlChanges.set(98);
-  midiInConfiguration.ignoredControlChanges.set(99);
-  midiInConfiguration.ignoredControlChanges.set(100);
-  midiInConfiguration.ignoredControlChanges.set(101);
 
   midiIn_ = createMidiIn(midiInConfiguration);
 
@@ -261,6 +252,28 @@ void MidiEngine::setSnapshot(const MidiEngineSnapshot& snapshot, int resettingTr
   const bool midiInPortChanged = snapshot_.midiInPort != snapshot.midiInPort;
   const bool midiOutPortChanged = snapshot_.midiOutPort != snapshot.midiOutPort;
   const bool midiInChannelChanged = snapshot_.midiInChannel != snapshot.midiInChannel;
+  const auto& binding = snapshot.presetControl;
+  const bool controlChannelChanged = binding.channel != presetControl_.channel;
+  if (controlChannelChanged || binding.source != presetControl_.source || binding.action != presetControl_.action
+      || binding.enabled != presetControl_.enabled || binding.threshold != presetControl_.threshold)
+  {
+    presetControl_.channel = binding.channel;
+    if (controlChannelChanged) presetControl_.clearInput();
+    presetControl_.source = binding.source;
+    presetControl_.action = binding.action;
+    presetControl_.enabled = binding.enabled;
+    presetControl_.threshold = binding.threshold;
+    presetControl_.rearm();
+    // Release a previously forwarded pedal/bend before reserving its release messages.
+    if (binding.enabled && binding.channel == snapshot_.midiInChannel) {
+      const int cc = binding.source - 4;
+      if (cc == 64 || cc == 66 || cc == 69)
+        handleIncomingControlChange(static_cast<uint8_t>(cc), 0, snapshot_.midiInChannel);
+      if (binding.source == 2 || binding.source == 3)
+        forwardPitchBendToAssignedTracks(0, 64);
+    }
+  }
+  if (midiInPortChanged) presetControl_.clearInput();
   const bool playModeChanged = snapshot_.playMode != snapshot.playMode;
   const bool pitchBendRangeChanged = snapshot_.pitchBendRange != snapshot.pitchBendRange;
   const bool muteSoloChanged = snapshot_.morphOutputMuteMask != snapshot.morphOutputMuteMask
@@ -554,7 +567,25 @@ void MidiEngine::handleIncomingMidiEvent(const MidiInEvent& ev)
     return;
 
   const uint8_t message = ev.message();
+  if (ev.channel() == presetControl_.channel) {
+    if (message == 0x80 || (message == 0x90 && ev.data2 == 0))
+      presetControl_.releaseNote(ev.data1);
+    const bool triggered = presetControl_.update(message, ev.data1, ev.data2);
+    if (triggered) emit presetStepRequested(presetControl_.action == 0 ? 1 : -1);
+    if (presetControl_.enabled && (presetControl_.matches(message, ev.data1)
+                                  || presetControl_.companion(message, ev.data1))) return;
+  }
   if(message==0xB0) {
+    // Navigation sees all CCs first, including bank/RPN controls. Keep the
+    // existing routing protection for unassigned controls on the note channel.
+    if (ev.channel() == snapshot_.midiInChannel) {
+      switch (ev.data1) {
+        case 0: case 6: case 32: case 38:
+        case 96: case 97: case 98: case 99: case 100: case 101:
+          return;
+        default: break;
+      }
+    }
     handleIncomingControlChange(ev.data1,ev.data2,ev.channel());
     return;
   }
@@ -654,7 +685,7 @@ void MidiEngine::handleIncomingControlChange(uint8_t controller, uint8_t value, 
 //-----------------------------------------------------------------------------
 {
   /*
-   * On the note channel, MidiIn_MonoInterpreter has already filtered Program
+   * On the note channel, the input path has already filtered Program
    * Change, Bank Select and RPN/NRPN. Dedicated channels deliver all CCs.
    *
    * The user may additionally protect the controller values belonging to

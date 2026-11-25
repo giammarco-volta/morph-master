@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "../core/Presets.h"
+#include "../core/MidiControlBinding.h"
 
 class IMidiOut;
 class MidiIn_MonoInterpreter;
@@ -35,6 +36,7 @@ struct MidiEngineSnapshot
   int surfaceMaxNote = 127;
 
   std::array<TrackPresetData, 16> tracks{};
+  Morphora::MidiControlBinding presetControl;
   CurveCcAssignments curveControls = defaultCurveCcAssignments();
   quint64 curveControlRevision = 0;
   quint64 curveEditAcknowledged = 0;
@@ -138,6 +140,7 @@ public slots:
   void acknowledgeMonitorFeedback(quint64 sequence);
 
 signals:
+  void presetStepRequested(int direction);
   void curveControlValueChanged(int slot, int delta, quint64 revision, quint64 serial);
   void midiInputPortsChanged(QStringList ports);
   void midiOutputPortsChanged(QStringList ports);
@@ -152,6 +155,7 @@ signals:
   void midiOutPortResolved(QString portName);
 
 private:
+  Morphora::MidiControlBinding presetControl_;
   std::unique_ptr<MidiIn_MonoInterpreter> midiIn_;
   std::unique_ptr<IMidiOut> midiOut_;
 

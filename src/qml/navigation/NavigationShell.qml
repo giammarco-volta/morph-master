@@ -20,7 +20,7 @@ Item {
         : licenseIconState === 1 ? qsTr("Trial active") : qsTr("Review license access")
 
     Component.onCompleted: {
-        console.log("[MorphMaster] NavigationShell loaded: assignment, 4-track grid, global morph curves")
+        console.log("[MorphMaster] NavigationShell loaded: configuration, 4-track grid, global morph curves")
     }
 
     readonly property int layoutClass:
@@ -36,8 +36,7 @@ Item {
     readonly property int trackCount: 16
     readonly property int tracksPerPage: phoneLayout ? 1 : 4
 
-    property string currentSection: "assignment"
-    property string lastPhoneConfigurationSection: "midi"
+    property string currentSection: "configuration"
 
     /* Index of the first track shown, zero based. */
     property int firstTrackIndex: 0
@@ -50,33 +49,17 @@ Item {
         "Soft/Loud Morph Curve"
     ]
 
-    readonly property var sections:
-        phoneLayout
-            ? [
-                  { section: "assignment", name: "Morph Output Assignment", heightUnits: 1 },
-                  { section: "midi", name: "MIDI Settings", heightUnits: 1 },
-                  { section: "settings", name: "Settings", heightUnits: 1 },
-                  { section: "tracks", name: "Tracks", heightUnits: 1 },
-                  { section: "curves", name: "Morph Curves", heightUnits: 1 },
-                  { section: "monitor", name: "Morph Monitor", heightUnits: 1 },
-                  { section: "manual", name: "Manual", heightUnits: 1 },
-                  { section: "about", name: "About", heightUnits: 1 }
-              ]
-            : [
-                  { section: "assignment", name: "Morph Output Assignment", heightUnits: 1 },
-                  {
-                      section: "configuration",
-                      name: "MIDI and Settings",
-                      heightUnits: 2
-                  },
-                  { section: "tracks", name: "Tracks", heightUnits: 1 },
-                  { section: "curves", name: "Morph Curves", heightUnits: 1 },
-                  { section: "monitor", name: "Morph Monitor", heightUnits: 1 },
-                  { section: "manual", name: "Manual", heightUnits: 1 },
-                  { section: "about", name: "About", heightUnits: 1 }
-              ]
-
-    readonly property int totalSectionUnits: 8
+    readonly property var sections: [
+        { section: "configuration", icon: "settings", name: "MIDI and Settings", heightUnits: 1 },
+        { section: "assignment", name: "Morph Output Assignment", heightUnits: 1 },
+        { section: "tracks", name: "Tracks", heightUnits: 1 },
+        { section: "curves", name: "Morph Curves", heightUnits: 1 },
+        { section: "monitor", name: "Morph Monitor", heightUnits: 1 },
+        { section: "presets", name: "Preset list", heightUnits: 1 },
+        { section: "manual", name: "Manual", heightUnits: 1 },
+        { section: "about", name: "About", heightUnits: 1 }
+    ]
+    readonly property int totalSectionUnits: sections.length
 
     readonly property real sectionButtonHeight:
         Math.min(56, (height - licenseButtonHeight) / Math.max(1, totalSectionUnits))
@@ -149,6 +132,8 @@ Item {
             return 6
         case "manual":
             return 7
+        case "presets":
+            return 9
         case "about":
             return 8
         default:
@@ -223,17 +208,6 @@ Item {
             curvesPageIndex = normalized
     }
 
-    onPhoneLayoutChanged: {
-        if (phoneLayout) {
-            if (currentSection === "configuration")
-                currentSection = lastPhoneConfigurationSection
-        } else if (currentSection === "midi"
-                   || currentSection === "settings") {
-            lastPhoneConfigurationSection = currentSection
-            currentSection = "configuration"
-        }
-    }
-
     Component {
         id: midiComponent
 
@@ -305,65 +279,39 @@ Item {
     Component {
         id: combinedConfigurationComponent
 
-        Item {
+        ScrollView {
+            id: configurationScroll
+            contentWidth: availableWidth
+            clip: true
             ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 12
+                width: configurationScroll.availableWidth
+                height: Math.max(implicitHeight, configurationScroll.availableHeight)
                 spacing: Theme.pageSpacing
 
-                Item {
-                    id: configurationControls
-
+                GridLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight:
-                        Math.max(combinedMidi.implicitHeight,
-                                 combinedSettingsColumn.implicitHeight)
-                    Layout.minimumHeight: Layout.preferredHeight
-
-                    RowLayout {
-                        anchors.fill: parent
-                        spacing: Theme.pageSpacing
-
-                        Item {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-
-                            MidiConfiguration {
-                                id: combinedMidi
-                                anchors.fill: parent
-                            }
-                        }
-
-
-                        Item {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-
-                            ColumnLayout {
-                                id: combinedSettingsColumn
-
-                                anchors.fill: parent
-                                spacing: UiMetrics.spacing(root.layoutClass)
-
-                                PerformanceSettings {
-                                    Layout.fillWidth: true
-                                }
-
-                                PresetSelector {
-                                    Layout.fillWidth: true
-                                }
-
-                                Item {
-                                    Layout.fillHeight: true
-                                }
-                            }
-                        }
+                    Layout.margins: 12
+                    columns: root.phoneLayout ? 1 : 2
+                    columnSpacing: Theme.pageSpacing
+                    rowSpacing: Theme.pageSpacing
+                    MidiConfiguration {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.alignment: Qt.AlignTop
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.alignment: Qt.AlignTop
+                        spacing: UiMetrics.spacing(root.layoutClass)
+                        PerformanceSettings { Layout.fillWidth: true }
+                        PresetSelector { Layout.fillWidth: true }
                     }
                 }
-
                 ConfigurationOverview {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.margins: 12
                     Layout.minimumHeight: 230
                 }
             }
@@ -647,6 +595,10 @@ Item {
                             root.currentSection = "manual"
                         }
                     }
+                }
+                PresetListPage {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                 }
             }
         }

@@ -230,6 +230,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
             <li><a href="#tracks">Tracks</a></li>
             <li><a href="#morph-curves">Morph Curves</a></li>
             <li><a href="#morph-monitor">Morph Monitor</a></li>
+            <li><a href="#preset-list">Preset List</a></li>
             <li><a href="#performance-behavior">Performance Behavior</a></li>
             <li><a href="#manual-and-about">Manual and About</a></li>
             <li><a href="#troubleshooting">Troubleshooting</a></li>
@@ -431,7 +432,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
     <h2>Phone, Tablet and Desktop Layouts</h2>
     <table border="1" bordercolor="#707070" cellpadding="6" cellspacing="0" class="manual-table" style="border-collapse:collapse; border-spacing:0; width:100%; margin:1em 0; border:1px solid #707070;" width="100%">
         <tr><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="28%">Area</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="34%">Phone</th><th align="left" bgcolor="#303030" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top; background-color:#303030; color:#FFFFFF; font-weight:bold;" valign="top" width="38%">Tablet/Desktop</th></tr>
-        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">MIDI and Settings</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Two separate pages</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Combined page with Configuration Overview</td></tr>
+        <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">MIDI and Settings</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Combined, vertically scrolling page</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Combined page with Configuration Overview</td></tr>
         <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">Tracks</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">One track per page</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Four tracks per page in a 2×2 grid</td></tr>
         <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">Morph Curves</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">One curve per page</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Both curves and four corner surfaces together</td></tr>
         <tr><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="28%">Keyboard</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="34%">Six pages of 28 notes</td><td align="left" style="border:1px solid #707070; padding:6px 9px; text-align:left; vertical-align:top;" valign="top" width="38%">Fixed or range-adapted keyboard, one or two rows</td></tr>
@@ -526,7 +527,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
     <h1 id="midi-and-settings">5. MIDI and Settings</h1>
 
     <p>
-        In tablet and desktop profiles Midi settings, Performance, Presets and Configuration overview are displayed in a single page.
+        MIDI settings, Performance, Presets and Configuration Overview are displayed in a single page on all profiles. On phone layouts, scroll vertically to reach all sections.
     </p>
 
     <figure>
@@ -560,7 +561,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
         However, these incoming controllers may conflict with the values stored in the preset. The <strong>Ignore Preset CCs</strong> option therefore determines whether setup-related CCs received on the input channel are discarded or forwarded to the assigned output tracks. Leave it enabled to protect the preset setup; disable it only when the incoming sequence is intentionally expected to control those parameters.
     </p>
     <p>
-        Expression CC11 is a special case. It can be forwarded in Poly mode when Ignore Preset CCs is disabled, but it is never forwarded in Mono mode because Morphora uses CC11 internally to perform the Morph Output crossfades. The complete forwarding rules are listed in Chapter 11.
+        Expression CC11 is a special case. It can be forwarded in Poly mode when Ignore Preset CCs is disabled, but it is never forwarded in Mono mode because Morphora uses CC11 internally to perform the Morph Output crossfades. The complete forwarding rules are listed in <a href="#midi-reference">MIDI Messages Generated and Forwarded</a>.
     </p>
 
     <h2>MIDI Output</h2>
@@ -1146,7 +1147,68 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
         Click or touch a key to generate a test note. Vertical position determines velocity: playing nearer the top of a key produces a lower velocity, while playing nearer the bottom produces a higher velocity. Multitouch permits up to ten simultaneous touch points.
     </p>
 
-    <h1 id="performance-behavior">9. Performance Behavior</h1>
+    <h1 id="preset-list">9. Preset List</h1>
+
+    <p>
+        Preset List lets you arrange saved presets in the order you need for a performance and recall them by touch, mouse or an assigned MIDI control. Create and save your presets in <a href="#midi-and-settings">MIDI and Settings</a>, then add them to this list. The list and its control settings are remembered between application sessions and are independent of the individual presets.
+    </p>
+
+    <figure>
+        <img src="images/PresetList.png" alt="Preset List with an ordered list on the left, keyboard and pedal control settings at the upper right, and previous and next preset buttons below">
+        <figcaption>
+            Preset List: arrange your performance order and recall presets from the screen or a MIDI controller.
+        </figcaption>
+    </figure>
+
+    <h2>Building and Editing the List</h2>
+    <ol>
+        <li>Tap or click the <strong>+</strong> button at the bottom of the left column. Its tooltip is <strong>add preset</strong>.</li>
+        <li>Choose an existing preset in the selection panel. Use the search field to find it by name.</li>
+        <li>The preset name is appended to the list, and the <strong>+</strong> button moves below it. Repeat to build your performance order.</li>
+    </ol>
+    <p>
+        Adding a preset to the list does not load it. You can add the same preset more than once, for example to return to an earlier sound later in a song. If no presets have been saved yet, first save one in MIDI and Settings.
+    </p>
+    <p>
+        Open the <strong>...</strong> menu beside a list entry to select <strong>Move up</strong>, <strong>Move down</strong> or <strong>Remove from list</strong>. Removing an entry only removes that occurrence from the list; the saved preset remains available. Deleting a saved preset in MIDI and Settings also removes its entries from the list.
+    </p>
+
+    <h2>Recalling Presets</h2>
+    <p>
+        Tap or click a preset name to load its saved settings and send its track setup to the receiving instrument. The selected entry is highlighted. Each recall restores the saved version, even when you select the same preset again, so save any edits you want to keep before recalling an entry.
+    </p>
+    <p>
+        The lower-right <strong>Recall preset</strong> panel provides two large buttons: the upward-pointing triangle selects the previous entry, and the downward-pointing triangle selects the next entry. Navigation stops at the first or last entry; it does not wrap around. When no list entry is selected, Next starts at the first entry and Previous starts at the last.
+    </p>
+    <p>
+        Recalling a preset stops the currently sounding notes before applying its setup. On smaller screens, scroll the list or the right-hand column to reach entries and controls below the visible area.
+    </p>
+
+    <h2>Keyboard and Pedal Control</h2>
+    <p>
+        The upper-right panel assigns one MIDI control to either <strong>Next preset</strong> or <strong>Previous preset</strong>. This assignment remains active when you switch to another page, so you can change sounds while watching Morph Monitor.
+    </p>
+    <ol>
+        <li>Select <strong>Enable assigned control</strong>.</li>
+        <li>Set the <strong>Control channel</strong>. Select <strong>Same as Input channel</strong> to follow the main MIDI input channel automatically. The channel selector then displays that channel and is disabled. Clear the checkbox to choose an independent channel from 1 to 16; the previous independent selection is restored.</li>
+        <li>Choose a <strong>Control</strong>: channel aftertouch, polyphonic aftertouch, pitch bend up or down, or a Control Change message from CC0 to CC119, including pedals and the modulation wheel.</li>
+        <li>Choose the <strong>Action</strong>: Next preset or Previous preset.</li>
+        <li>Adjust the <strong>Activation threshold</strong> from 1 to 127 to suit your controller and playing style.</li>
+    </ol>
+    <p>
+        The control uses the MIDI input device selected in MIDI and Settings. An independent control channel allows a pedal or other controller to change presets on a different channel from the notes. Selecting Same as Input channel also follows input-channel changes caused by loading a preset.
+    </p>
+    <p>
+        One action is performed when the control reaches the threshold. Holding it above that level does not repeatedly advance the list: release it to half the threshold or below before the next gesture. For pitch bend, return the wheel towards its centre position. For polyphonic aftertouch, releasing the key also rearms that key.
+    </p>
+    <p>
+        For example, select <strong>Sustain pedal (CC 64)</strong>, choose Next preset and set the threshold to 64. Each press advances one entry; release the pedal before pressing again.
+    </p>
+    <p>
+        While enabled, the assigned control on its selected channel is reserved for preset navigation and is not forwarded to the receiving instrument or used for morph-curve editing. A sustain pedal assigned this way therefore changes presets instead of sustaining notes. Clear Enable assigned control to restore normal MIDI handling. The on-screen preset buttons remain available regardless of this checkbox.
+    </p>
+
+    <h1 id="performance-behavior">10. Performance Behavior</h1>
 
     <h2>Poly Mode</h2>
     <p>
@@ -1187,7 +1249,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
         If MIDI input is received while no tracks are assigned to any Morph Output, Morphora displays a temporary banner directing you to Morph Output Assignment or Tracks.
     </p>
 
-    <h1 id="manual-and-about">10. Manual and About</h1>
+    <h1 id="manual-and-about">11. Manual and About</h1>
 
     <h2>Manual</h2>
     <p>
@@ -1199,7 +1261,7 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
         The About page contains the application version, credits, website, contact address, license information and a link that opens the Manual page.
     </p>
 
-    <h1 id="troubleshooting">11. Troubleshooting</h1>
+    <h1 id="troubleshooting">12. Troubleshooting</h1>
 
     <h2>MIDI Input Is Received but No Sound Is Produced</h2>
     <ul>
@@ -1232,9 +1294,12 @@ figcaption { margin-top: 6px; color: #555; font-style: italic; text-align: cente
         Gray keys are outside the selected Keyboard Range. In the fixed 88-key view they remain visible for context but cannot be used as active-range keys.
     </p>
 
-    <h1 id="midi-reference">12. MIDI Messages Generated and Forwarded</h1>
+    <h1 id="midi-reference">13. MIDI Messages Generated and Forwarded</h1>
 
     <h2>Incoming Channel Messages</h2>
+    <p>
+        The forwarding rules below apply when a message is not reserved for an enabled control assignment. In particular, the control assigned in <a href="#preset-list">Preset List</a> is consumed on its selected control channel while Enable assigned control is selected.
+    </p>
     <p>
         The following table describes whether messages received on the selected input channel are forwarded to the assigned, enabled output tracks. In this table, “Ignore Preset CCs off” means that the <strong>Ignore Preset CCs</strong> option is not selected.
     </p>

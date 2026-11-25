@@ -41,6 +41,7 @@ set(MORPHMASTER_SOURCES
   src/core/PiecewiseCurve.cpp
   src/core/KeyboardStandardRanges.h
   src/core/Footage.h
+  src/core/MidiControlBinding.h
   src/core/Presets.h
   src/core/Presets.cpp
   src/core/InstrumentDefinition.h
@@ -97,6 +98,7 @@ qt_add_qml_module(MorphMaster
     src/qml/widgets/MidiConfiguration.qml
     src/qml/widgets/SplashScreen.qml
     src/qml/widgets/PerformanceSettings.qml
+    src/qml/pages/PresetListPage.qml
     src/qml/widgets/PresetSelector.qml
     src/qml/widgets/ConfigurationNode.qml
     src/qml/widgets/ConfigurationOverview.qml

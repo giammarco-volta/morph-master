@@ -223,6 +223,90 @@ ApplicationWindow {
     window->grabWindow().save("curve-controls-ui-1024.png");
     window->resize(640,360);page->setProperty("singleCurveMode",true);settle();
     window->grabWindow().save("curve-controls-ui-phone.png");
+    // GM2 Reset must also reset all local tracks, including unassigned ones.
+    for (int i = 0; i < 16; ++i) {
+      auto* track = qobject_cast<TrackController*>(settings.track(i + 1));
+      track->setMorphOutput(i % 2 == 0 ? i % 8 : 8);
+      track->setProgramNumber(42);
+      track->setVolume(12);
+      track->setDetuneOffset(15);
+    }
+    settings.sendGM2Reset();
+    for (int i = 0; i < 16; ++i) {
+      auto* track = qobject_cast<TrackController*>(settings.track(i + 1));
+      check(track->morphOutput() == 8 && !track->hasProgramSelection()
+            && track->instrumentProgramDisplayName().isEmpty()
+            && track->volume() == 100 && track->detuneOffset() == 0,
+            "GM2 Reset did not reset every local track");
+    }
+    for (const auto& output : settings.currentPreset().morphOutputs)
+      check(output.name.isEmpty() && !output.customName && output.nameTrackIndex == -1,
+            "GM2 Reset left stale Morph Output names");
+    QQmlComponent listPageComponent(&engine,
+      QUrl::fromLocalFile(QStringLiteral(MORPH_SOURCE_DIR) + "/src/qml/pages/PresetListPage.qml"));
+    std::unique_ptr<QObject> listPageObject(listPageComponent.create());
+    check(listPageObject != nullptr, qPrintable(listPageComponent.errorString()));
+    auto* listPage = qobject_cast<QQuickItem*>(listPageObject.get());
+    check(listPage != nullptr, "Preset page did not create a visual item");
+    listPage->setParentItem(window->contentItem());
+    listPage->setWidth(584); listPage->setHeight(360);
+    settle();
+    auto* listView = findVisualItem(listPage, "presetListView");
+    check(listView && listView->width() > 100 && listView->height() > 200,
+          "Preset list collapsed on phone layout");
+
+    // The set list keeps occurrence identity, survives edits and reloads saved data.
+    const QString presetA = "Set list test A", presetB = "Set list test B";
+    settings.currentPreset().tracks[0].volume = 31;
+    check(settings.saveCurrentPresetAs(presetA), "Could not save set-list fixture A");
+    settings.currentPreset().tracks[0].volume = 62;
+    check(settings.saveCurrentPresetAs(presetB), "Could not save set-list fixture B");
+    while (!settings.presetList().isEmpty()) settings.removeFromPresetList(0);
+    settings.addToPresetList("Missing preset");
+    check(settings.presetList().isEmpty(), "Missing preset was added");
+    settings.addToPresetList(presetA); settings.addToPresetList(presetB); settings.addToPresetList(presetA);
+    settings.recallPresetListItem(0);
+    check(settings.currentPreset().tracks[0].volume == 31, "List did not load saved preset");
+    settings.currentPreset().tracks[0].volume = 99;
+    settings.recallPresetListItem(0);
+    check(settings.currentPreset().tracks[0].volume == 31, "Repeated recall did not restore saved state");
+    settings.stepPresetList(1); settings.stepPresetList(1);
+    check(settings.presetListIndex() == 2 && settings.currentPresetName() == presetA, "Duplicate list entry lost selection");
+    settings.stepPresetList(1);
+    check(settings.presetListIndex() == 2, "Next wrapped beyond end of list");
+    settings.movePresetListItem(2, 0);
+    check(settings.presetListIndex() == 0, "Reordering lost selected occurrence");
+    settings.removeFromPresetList(0);
+    check(settings.presetNameExists(presetA), "Removing list entry deleted saved preset");
+    settings.setControlEnabled(true); settings.setControlSource(68); settings.setControlThreshold(64);
+    settings.setControlChannel(5); settings.setControlChannel(16);
+    check(settings.controlChannel() == 5, "Invalid control channel was accepted");
+    settings.setMidiInChannel(7);
+    settings.setControlSameAsInput(true);
+    auto* controlChannelWidget = listPageObject->findChild<QObject*>("presetControlChannel");
+    check(settings.controlChannel() == 7 && controlChannelWidget
+          && !controlChannelWidget->property("enabled").toBool()
+          && controlChannelWidget->property("currentChannel").toInt() == 8,
+          "Linked control channel was not shown disabled with the input value");
+    settings.setMidiInChannel(8);
+    check(settings.controlChannel() == 8
+          && controlChannelWidget->property("currentChannel").toInt() == 9,
+          "Linked control channel did not follow input changes");
+    settings.setControlSameAsInput(false);
+    check(settings.controlChannel() == 5 && controlChannelWidget->property("enabled").toBool(),
+          "Unlinking did not restore the independent channel");
+    settings.setControlSameAsInput(true);
+    {
+      SettingsController restored;
+      check(restored.presetList() == settings.presetList() && restored.controlEnabled()
+            && restored.controlSource() == 68 && restored.controlThreshold() == 64
+            && restored.controlSameAsInput() && restored.controlChannel() == 8,
+            "Set list/control settings did not survive controller recreation");
+    }
+    settings.recallPresetListItem(0);
+    settings.deleteCurrentPreset();
+    check(!settings.presetList().contains(presetA), "Deleting preset left stale list entries");
+    settings.activatePreset(settings.presetNames().indexOf(presetB)); settings.deleteCurrentPreset();
     std::cout<<"Curve MIDI UI checks passed\n";
   } catch(const std::exception& e) { std::cerr<<e.what()<<'\n';return 1; }
 }

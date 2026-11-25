@@ -54,6 +54,78 @@ public:
     {
       MidiEngine engine;
       auto* output = setup(engine);
+      engine.presetControl_.channel = 5;
+      engine.presetControl_.enabled = true;
+      engine.presetControl_.source = 68;
+      int steps = 0;
+      QObject::connect(&engine, &MidiEngine::presetStepRequested,
+                       [&steps](int direction) { steps += direction; });
+      auto input = std::make_unique<InjectedMidiIn>();
+      auto* raw = input.get();
+      MidiIn_MonoInterpreter::Configuration config;
+      config.forwardOffChannelMessages = true;
+      MidiIn_MonoInterpreter interpreter(std::move(input), config);
+      interpreter.setSourceChannel(0);
+      interpreter.setCallback([&](const MidiInEvent& event) { engine.handleIncomingMidiEvent(event); });
+      output->messages.clear();
+      raw->send(0xb6, 64, 127);
+      check(steps == 0, "Preset control accepted the wrong independent channel");
+      raw->send(0xb5, 64, 127); raw->send(0xb5, 64, 127);
+      check(steps == 1 && output->messages.empty(), "Off-channel pedal repeated or leaked to output");
+      raw->send(0xb5, 64, 0); raw->send(0xb5, 64, 127);
+      check(steps == 2, "Off-channel pedal failed to rearm");
+      engine.presetControl_.source = 0; engine.presetControl_.clearInput();
+      raw->send(0xd0, 127, 0);
+      check(steps == 2, "Note-channel aftertouch triggered independent preset control");
+      raw->send(0xd5, 127, 0);
+      check(steps == 3, "Off-channel aftertouch was filtered");
+      engine.presetControl_.source = 2; engine.presetControl_.clearInput();
+      raw->send(0xe5, 127, 127);
+      check(steps == 4, "Off-channel pitch bend was filtered");
+      engine.presetControl_.source = 1; engine.presetControl_.clearInput();
+      output->messages.clear();
+      raw->send(0x95, 60, 100); raw->send(0xa5, 60, 127);
+      raw->send(0x85, 60, 0); raw->send(0xa5, 60, 127);
+      check(steps == 6 && output->messages.empty(), "Off-channel notes leaked or failed to rearm poly pressure");
+      check(interpreter.getState().livingNotes.empty(), "Control channel changed mono note state");
+    }
+    {
+      MidiEngine engine;
+      auto* output = setup(engine);
+      engine.presetControl_.enabled = true;
+      engine.presetControl_.source = 68; // Sustain CC64.
+      engine.presetControl_.threshold = 64;
+      int steps = 0;
+      QObject::connect(&engine, &MidiEngine::presetStepRequested, [&steps](int direction) { steps += direction; });
+      auto send = [&](int status, int number, int value) {
+        MidiInEvent event; event.status = status; event.data1 = number; event.data2 = value;
+        engine.handleIncomingMidiEvent(event);
+      };
+      output->messages.clear();
+      send(0xb1, 64, 127);
+      check(steps == 0, "Preset navigation accepted another input channel");
+      send(0xb0, 64, 127); send(0xb0, 64, 100);
+      check(steps == 1 && output->messages.empty(), "Reserved pedal repeated or reached remote instrument");
+      send(0xb0, 64, 0); send(0xb0, 64, 127);
+      check(steps == 2, "Pedal release did not rearm preset navigation");
+      engine.presetControl_.action = 1;
+      send(0xb0, 64, 0); send(0xb0, 64, 127);
+      check(steps == 1, "Previous preset direction is incorrect");
+      engine.presetControl_.enabled = false;
+      send(0xb0, 64, 0);
+      check(!output->messages.empty(), "Disabled preset control still consumed the pedal");
+      output->messages.clear();
+      engine.presetControl_.source = 4; engine.presetControl_.enabled = true;
+      engine.presetControl_.clearInput();
+      send(0xb0, 0, 127);
+      check(steps == 0 && output->messages.empty(), "Bank control could not navigate presets");
+      engine.presetControl_.enabled = false;
+      send(0xb0, 0, 0);
+      check(output->messages.empty(), "Unreserved bank select escaped routing protection");
+    }
+    {
+      MidiEngine engine;
+      auto* output = setup(engine);
       engine.snapshot_.tracks[7] = TrackPresetData{};
       output->messages.clear();
       engine.resetTrackSetup(7);
